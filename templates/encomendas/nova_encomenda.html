@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Encomenda{% endblock %}
+
+{% block content %}
+
+<div class="card p-4 shadow-sm">
+
+    <h3 class="mb-3">
+        <i class="bi bi-plus-circle"></i> Registrar Nova Encomenda
+    </h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- BLOCO -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Bloco</label>
+            <select id="bloco" class="form-select">
+                <option value="">Selecione um bloco</option>
+                {% for b in blocos %}
+                    <option value="{{ b.id }}">{{ b.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- APARTAMENTO -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Apartamento</label>
+            <select id="apartamento" name="apartamento" class="form-select" disabled>
+                <option value="">Selecione o bloco primeiro</option>
+            </select>
+        </div>
+
+        <!-- MORADOR -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Morador</label>
+            <select id="morador" name="morador" class="form-select" disabled>
+                <option value="">Selecione o apartamento</option>
+            </select>
+        </div>
+
+        <!-- Campos normais do formulário -->
+        <div class="mb-3">
+            {{ form.descricao.label_tag }}
+            {{ form.descricao }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.local_armazenado.label_tag }}
+            {{ form.local_armazenado }}
+        </div>
+
+        <button class="btn btn-primary w-100 mt-3">
+            <i class="bi bi-check2-circle"></i> Registrar Encomenda
+        </button>
+
+    </form>
+</div>
+
+<script>
+// Ao selecionar bloco -> carregar apartamentos
+document.getElementById('bloco').addEventListener('change', function() {
+    const blocoId = this.value;
+    const aptSelect = document.getElementById('apartamento');
+    const morSelect = document.getElementById('morador');
+
+    aptSelect.innerHTML = "<option>Carregando...</option>";
+    morSelect.innerHTML = "<option>Selecione o apartamento</option>";
+    morSelect.disabled = true;
+
+    fetch(`/ajax/blocos/${blocoId}/apartamentos/`)
+        .then(res => res.json())
+        .then(data => {
+            aptSelect.disabled = false;
+            aptSelect.innerHTML = "<option value=''>Selecione</option>";
+            data.forEach(ap => {
+                aptSelect.innerHTML += `<option value="${ap.id}">${ap.numero}</option>`;
+            })
+        });
+});
+
+// Ao selecionar apartamento -> carregar moradores
+document.getElementById('apartamento').addEventListener('change', function() {
+    const aptoId = this.value;
+    const morSelect = document.getElementById('morador');
+
+    morSelect.innerHTML = "<option>Carregando...</option>";
+
+    fetch(`/ajax/apartamentos/${aptoId}/moradores/`)
+        .then(res => res.json())
+        .then(data => {
+            morSelect.disabled = false;
+            morSelect.innerHTML = "<option value=''>Selecione</option>";
+            data.forEach(m => {
+                morSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
+            })
+        });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Condomínio — Administração{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        🏢 Administração do Condomínio
+    </a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}
+    <!-- Remove o “View site / Change password / Log out” -->
+{% endblock %}

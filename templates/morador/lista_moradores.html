@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Moradores{% endblock %}
+
+{% block content %}
+<h3 class="mb-3">
+    <i class="bi bi-people"></i> Moradores
+</h3>
+
+<a href="{% url 'novo_morador' %}" class="btn btn-primary mb-3 w-100">
+    <i class="bi bi-plus-circle"></i> Novo Morador
+</a>
+
+<div class="list-group">
+    {% for m in moradores %}
+        <a href="{% url 'editar_morador' m.pk %}" class="list-group-item list-group-item-action">
+            <strong>{{ m.nome }}</strong>
+            <br>
+            {% if m.apartamentos.all %}
+                <small class="text-muted">
+                    {% for apt in m.apartamentos.all %}
+                        {{ apt }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </small>
+            {% endif %}
+        </a>
+    {% empty %}
+        <p class="text-muted">Nenhum morador cadastrado.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

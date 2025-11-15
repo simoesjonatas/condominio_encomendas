@@ -1,0 +1,27 @@
+
+version: '3.9'
+
+services:
+  encomenda:
+    build: .
+    container_name: encomenda_web
+    command: gunicorn condominio.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    ports:
+      - "8787:8000"
+
+  nginx_encomenda:
+    image: nginx:alpine
+    container_name: encomenda_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/staticfiles
+    depends_on:
+      - encomenda
+
+volumes:
+  static_volume:

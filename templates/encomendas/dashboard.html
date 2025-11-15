@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-4"><i class="bi bi-speedometer"></i> Dashboard</h3>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="vstack gap-4">
+
+    <!-- GRÁFICO 1 -->
+    <div class="card p-3 shadow-sm">
+        <h5 class="text-center mb-3">Encomendas – Últimos 7 dias</h5>
+        <canvas id="graficoDias"></canvas>
+    </div>
+
+    <!-- GRÁFICO 2 -->
+    <div class="card p-3 shadow-sm">
+        <h5 class="text-center mb-3">Status das encomendas – Hoje</h5>
+        <canvas id="graficoStatus"></canvas>
+    </div>
+
+    <!-- GRÁFICO 3 -->
+    <div class="card p-3 shadow-sm">
+        <h5 class="text-center mb-3">Top 5 moradores que mais recebem</h5>
+        <canvas id="graficoMoradores"></canvas>
+    </div>
+
+</div>
+
+<script>
+/* ---------- GRÁFICO DE BARRAS/DIAS ---------- */
+new Chart(document.getElementById('graficoDias'), {
+    type: 'bar',
+    data: {
+        labels: {{ dias_labels|safe }},
+        datasets: [{
+            label: 'Encomendas',
+            data: {{ dias_totais|safe }},
+            backgroundColor: '#0d6efd'
+        }]
+    },
+});
+
+/* ---------- ROSQUINHA – PENDENTES/ENTREGUES ---------- */
+new Chart(document.getElementById('graficoStatus'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Pendentes', 'Entregues'],
+        datasets: [{
+            data: [{{ pendentes_hoje }}, {{ entregues_hoje }}],
+            backgroundColor: ['#ffc107', '#198754']
+        }]
+    },
+});
+
+/* ---------- TOP MORADORES ---------- */
+new Chart(document.getElementById('graficoMoradores'), {
+    type: 'bar',
+    data: {
+        labels: {{ moradores_labels|safe }},
+        datasets: [{
+            label: 'Encomendas Recebidas',
+            data: {{ moradores_totais|safe }},
+            backgroundColor: '#6610f2'
+        }]
+    },
+    options: {
+        indexAxis: 'y'
+    }
+});
+</script>
+
+{% endblock %}

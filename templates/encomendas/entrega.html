@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Entrega{% endblock %}
+
+{% block content %}
+
+<div class="card p-4 shadow-sm">
+
+    <h4 class="mb-3">
+        <i class="bi bi-box-arrow-down"></i> Registrar Entrega
+    </h4>
+
+    <p class="text-muted">
+        <strong>Bloco:</strong> {{ e.apartamento.bloco.nome }}<br>
+        <strong>Apartamento:</strong> {{ e.apartamento.numero }}<br>
+        <strong>Morador:</strong> 
+        {% if e.morador %}
+            {{ e.morador.nome }}
+        {% else %}
+            —
+        {% endif %}<br>
+        <strong>Sequencial:</strong> #{{ e.sequencial_do_dia }}
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            {{ form.retirado_por.label_tag }}
+            {{ form.retirado_por }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Assinatura</label>
+
+            <canvas id="pad"
+                    width="350"
+                    height="200"
+                    style="border: 1px solid #ccc; border-radius: 6px; background:white;">
+            </canvas>
+
+            <button type="button" id="limpar"
+                    class="btn btn-sm btn-warning mt-2 w-100">
+                <i class="bi bi-eraser"></i> Limpar Assinatura
+            </button>
+        </div>
+
+        {{ form.assinatura_base64 }}
+
+        <button class="btn btn-success w-100 mt-3">
+            <i class="bi bi-check2-circle"></i> Confirmar Entrega
+        </button>
+    </form>
+</div>
+
+<script>
+let canvas = document.getElementById("pad");
+let ctx = canvas.getContext("2d");
+let desenhando = false;
+
+// bloquear scroll ao desenhar
+function bloquearScroll(e) {
+    e.preventDefault();
+}
+
+function pos(e) {
+    let rect = canvas.getBoundingClientRect();
+    let x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    let y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    return { x, y };
+}
+
+// DESKTOP
+canvas.addEventListener("mousedown", () => {
+    desenhando = true;
+    ctx.beginPath();
+});
+canvas.addEventListener("mouseup", () => desenhando = false);
+canvas.addEventListener("mouseleave", () => desenhando = false);
+
+canvas.addEventListener("mousemove", function(e) {
+    if (!desenhando) return;
+    let p = pos(e);
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "black";
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+});
+
+// MOBILE
+canvas.addEventListener("touchstart", function(e) {
+    desenhando = true;
+    ctx.beginPath();
+    bloquearScroll(e);
+}, { passive: false });
+
+canvas.addEventListener("touchend", function(e) {
+    desenhando = false;
+    bloquearScroll(e);
+}, { passive: false });
+
+canvas.addEventListener("touchmove", function(e) {
+    if (!desenhando) return;
+    let p = pos(e);
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "black";
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+
+    bloquearScroll(e);
+}, { passive: false });
+
+// SALVAR NO SUBMIT
+document.querySelector("form").addEventListener("submit", function() {
+    document.querySelector("input[name='assinatura_base64']").value = canvas.toDataURL();
+});
+
+// BOTÃO LIMPAR
+document.getElementById("limpar").addEventListener("click", function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+});
+</script>
+
+
+{% endblock %}

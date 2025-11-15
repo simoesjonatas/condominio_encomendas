@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+
+    <title>Etiquetas</title>
+
+    <style>
+        @page {
+            size: 80mm 40mm;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .etiqueta {
+            box-sizing: border-box;
+            width: 80mm;
+            height: 40mm;
+            padding: 3mm 4mm;
+            border-bottom: 1px dashed #000; /* separador opcional */
+            font-family: Arial, sans-serif;
+            page-break-after: always; /* importante */
+        }
+
+        .linha {
+            font-size: 10pt;
+            line-height: 1.1;
+        }
+
+        .titulo {
+            text-align: center;
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 2mm;
+        }
+
+        .numero {
+            font-size: 18pt;
+            font-weight: bold;
+            text-align: center;
+            border: 1px dashed #000;
+            margin: 2mm 0;
+        }
+
+        .info-menor {
+            font-size: 8pt;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+{% for e in encomendas %}
+<div class="etiqueta">
+
+    <div class="titulo">ENTREGA</div>
+
+    <div class="linha">
+        <strong>BL:</strong> {{ e.apartamento.bloco.nome }}
+        &nbsp;|&nbsp;
+        <strong>AP:</strong> {{ e.apartamento.numero }}
+    </div>
+
+    {% if e.morador %}
+    <div class="linha">
+        <strong>Morador:</strong> {{ e.morador.nome }}
+    </div>
+    {% endif %}
+
+    <div class="numero">
+        #{{ e.sequencial_do_dia }}
+    </div>
+
+    {% if e.descricao %}
+    <div class="linha">
+        <strong>Desc:</strong> {{ e.descricao }}
+    </div>
+    {% endif %}
+
+    <div class="info-menor">
+        Recebido: {{ e.data_recebimento }}
+    </div>
+</div>
+{% endfor %}
+
+<script>
+    window.print();
+</script>
+
+</body>
+</html>

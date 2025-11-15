@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar Encomendas{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3">
+    <i class="bi bi-search"></i> Buscar Encomendas
+</h3>
+
+<!-- Form de Busca -->
+<form method="get" class="mb-4">
+    <div class="input-group">
+        <input type="text"
+               name="q"
+               value="{{ termo }}"
+               class="form-control"
+               placeholder="Ex: João, 101, Bloco A, #5, caixa grande…">
+        <button class="btn btn-primary">
+            <i class="bi bi-search"></i>
+        </button>
+    </div>
+</form>
+
+{% if termo and resultados %}
+    <p class="text-muted small mb-3">
+        {{ resultados|length }} resultado{{ resultados|length|pluralize }} encontrado{{ resultados|length|pluralize }}
+    </p>
+
+    <div class="list-group">
+    {% for e in resultados %}
+        <div class="list-group-item mb-2 shadow-sm">
+
+            <div class="d-flex justify-content-between">
+                <strong>
+                    Bloco {{ e.apartamento.bloco.nome }} · Apto {{ e.apartamento.numero }}
+                </strong>
+
+                <span class="badge bg-primary">
+                    #{{ e.sequencial_do_dia }}
+                </span>
+            </div>
+
+            <div class="mt-1">
+                <small class="text-muted">
+                    Morador:
+                    {% if e.morador %}
+                        {{ e.morador.nome }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </small>
+                <br>
+                <small class="text-muted">
+                    Recebido em {{ e.data_recebimento }}
+                </small>
+                {% if e.descricao %}
+                    <br>
+                    <small class="text-muted">
+                        Pacote: {{ e.descricao }}
+                    </small>
+                {% endif %}
+            </div>
+
+            <div class="mt-3 d-flex gap-2">
+                
+                <a href="{% url 'entregar_encomenda' e.pk %}" class="btn btn-success w-100">
+                    <i class="bi bi-pencil"></i> Registrar Entrega
+                </a>
+
+
+                <a href="{% url 'detalhes_encomenda' e.pk %}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="bi bi-search"></i> Detalhes
+                </a>
+
+            </div>
+
+        </div>
+    {% endfor %}
+    </div>
+
+{% elif termo %}
+    <div class="alert alert-warning">Nenhum resultado encontrado.</div>
+
+{% endif %}
+
+{% endblock %}

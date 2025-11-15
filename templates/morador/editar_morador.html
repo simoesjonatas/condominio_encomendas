@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Morador{% endblock %}
+
+{% block content %}
+<div class="card p-4 shadow-sm">
+
+    <h3 class="mb-3">
+        <i class="bi bi-pencil"></i> Editar {{ morador.nome }}
+    </h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            {{ form.nome.label_tag }}
+            {{ form.nome }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.apartamentos.label_tag }}
+            {{ form.apartamentos }}
+        </div>
+
+        <button class="btn btn-primary w-100">
+            <i class="bi bi-check-circle"></i> Atualizar
+        </button>
+
+    </form>
+
+</div>
+{% endblock %}

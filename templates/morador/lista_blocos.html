@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Blocos{% endblock %}
+
+{% block content %}
+<h3 class="mb-3">
+    <i class="bi bi-building"></i> Blocos
+</h3>
+
+<a href="{% url 'novo_bloco' %}" class="btn btn-primary mb-3 w-100">
+    <i class="bi bi-plus-circle"></i> Novo Bloco
+</a>
+
+<div class="list-group">
+    {% for b in blocos %}
+        <div class="list-group-item">
+            <h5 class="mb-0">{{ b.nome }}</h5>
+        </div>
+    {% empty %}
+        <p class="text-muted">Nenhum bloco cadastrado.</p>
+    {% endfor %}
+</div>
+{% endblock %}

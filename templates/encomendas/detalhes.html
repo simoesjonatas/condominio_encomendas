@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes da Encomenda{% endblock %}
+
+{% block content %}
+
+<div class="card p-4 shadow-sm">
+
+    <h4 class="mb-3">
+        <i class="bi bi-info-circle"></i> Detalhes da Encomenda
+    </h4>
+
+    <!-- Número sequencial -->
+    <div class="d-flex justify-content-between mb-3">
+        <span class="text-muted">Número sequencial do dia:</span>
+        <span class="badge bg-primary fs-6">#{{ e.sequencial_do_dia }}</span>
+    </div>
+
+    <hr>
+
+    <!-- Apartamento -->
+    <div class="mb-3">
+        <strong>Bloco:</strong> {{ e.apartamento.bloco.nome }}<br>
+        <strong>Apartamento:</strong> {{ e.apartamento.numero }}
+    </div>
+
+    <!-- Morador -->
+    <div class="mb-3">
+        <strong>Morador:</strong>
+        {% if e.morador %}
+            {{ e.morador.nome }}
+        {% else %}
+            <span class="text-muted">Não informado</span>
+        {% endif %}
+    </div>
+
+    <!-- Descrição -->
+    {% if e.descricao %}
+        <div class="mb-3">
+            <strong>Descrição:</strong> {{ e.descricao }}
+        </div>
+    {% endif %}
+
+    <!-- Local -->
+    <div class="mb-3">
+        <strong>Local armazenado:</strong> {{ e.get_local_armazenado_display }}
+    </div>
+
+    <!-- Datas -->
+    <div class="mb-3">
+        <strong>Recebido em:</strong> {{ e.data_recebimento }}<br>
+        <strong>Recebido por:</strong> {{ e.recebido_por }}
+    </div>
+
+    <!-- Status -->
+    <div class="my-3">
+        {% if e.retirado %}
+            <span class="badge bg-success p-2">ENTREGUE</span><br>
+            <small class="text-muted">
+                Entregue em {{ e.data_retirada }} por {{ e.retirado_por }}
+            </small>
+        {% else %}
+            <span class="badge bg-warning text-dark p-2">PENDENTE</span>
+        {% endif %}
+    </div>
+
+    {% if e.retirado %}
+    <div class="mt-4">
+
+        <h5 class="mb-2"><i class="bi bi-pencil"></i> Assinatura da Retirada</h5>
+
+        {% if e.assinatura %}
+            <!-- Mostra a assinatura -->
+            <div class="border p-2 rounded bg-white text-center">
+                <img src="{{ e.assinatura.url }}" 
+                     alt="Assinatura"
+                     class="img-fluid"
+                     style="max-height: 200px;">
+            </div>
+
+            <a href="{{ e.assinatura.url }}" target="_blank" 
+               class="btn btn-outline-secondary mt-2 w-100">
+                <i class="bi bi-box-arrow-up-right"></i> Abrir Assinatura
+            </a>
+
+        {% else %}
+            <!-- Se entregou mas não tem assinatura -->
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-circle"></i>
+                Esta entrega não possui assinatura.
+            </div>
+        {% endif %}
+
+    </div>
+{% endif %}
+
+
+    <hr>
+
+    <!-- BOTÕES -->
+    <div class="d-flex flex-column gap-2 mt-3">
+
+        {% if not e.retirado %}
+            <a href="{% url 'entregar_encomenda' e.pk %}" class="btn btn-success w-100">
+                <i class="bi bi-box-arrow-down"></i> Registrar Entrega
+            </a>
+
+            <a href="{% url 'etiqueta_encomenda' e.pk %}" target="_blank" class="btn btn-secondary w-100">
+                <i class="bi bi-printer"></i> Imprimir Etiqueta
+            </a>
+        {% endif %}
+
+
+        <a href="javascript:history.back()" class="btn btn-outline-dark w-100">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

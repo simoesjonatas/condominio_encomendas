@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Bloco{% endblock %}
+
+{% block content %}
+<div class="card p-4 shadow-sm">
+    <h3 class="mb-3">
+        <i class="bi bi-building-add"></i> Novo Bloco
+    </h3>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.nome.label_tag }}
+        {{ form.nome }}
+
+        <button class="btn btn-success w-100 mt-3">
+            <i class="bi bi-check2-circle"></i> Salvar
+        </button>
+    </form>
+</div>
+{% endblock %}

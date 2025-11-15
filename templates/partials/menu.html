@@ -1,0 +1,103 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="bi bi-box-seam"></i> Encomendas
+        </a>
+
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard' %}">
+                        <i class="bi bi-speedometer"></i> Dashboard
+                    </a>
+                </li>
+
+
+                <!-- Encomendas -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lista_encomendas' %}">
+                        <i class="bi bi-list-task"></i> Encomendas
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'buscar_encomendas' %}">
+                        <i class="bi bi-search"></i> Buscar
+                    </a>
+                </li>
+
+
+                <!-- Nova encomenda -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'nova_encomenda' %}">
+                        <i class="bi bi-plus-circle"></i> Nova Encomenda
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'historico_entregas' %}">
+                        <i class="bi bi-clock-history"></i> Histórico
+                    </a>
+                </li>
+
+
+                <!-- Moradores -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lista_moradores' %}">
+                        <i class="bi bi-people"></i> Moradores
+                    </a>
+                </li>
+
+                <!-- Apartamentos -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lista_apartamentos' %}">
+                        <i class="bi bi-door-open"></i> Apartamentos
+                    </a>
+                </li>
+
+                <!-- Blocos -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lista_blocos' %}">
+                        <i class="bi bi-building"></i> Blocos
+                    </a>
+                </li>
+
+                {% if user.is_authenticated %}
+
+                    <!-- Admin -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/">
+                            <i class="bi bi-gear"></i> Admin
+                        </a>
+                    </li>
+
+                    <!-- Logout -->
+                    <li class="nav-item">
+                        <a class="nav-link text-warning" href="/logout/">
+                            <i class="bi bi-box-arrow-right"></i> Sair
+                        </a>
+                    </li>
+
+                {% else %}
+
+                    <!-- Login -->
+                    <li class="nav-item">
+                        <a class="nav-link text-success" href="/login/">
+                            <i class="bi bi-box-arrow-in-right"></i> Entrar
+                        </a>
+                    </li>
+
+                {% endif %}
+
+            </ul>
+        </div>
+    </div>
+</nav>
