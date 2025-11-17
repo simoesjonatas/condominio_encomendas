@@ -81,9 +81,12 @@
 
                     <!-- Logout -->
                     <li class="nav-item">
-                        <a class="nav-link text-warning" href="/logout/">
-                            <i class="bi bi-box-arrow-right"></i> Sair
-                        </a>
+                        <form action="{% url 'logout' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button class="nav-link btn btn-link text-danger p-0" style="text-decoration:none;">
+                                <i class="bi bi-box-arrow-right"></i> Sair
+                            </button>
+                        </form>
                     </li>
 
                 {% else %}
