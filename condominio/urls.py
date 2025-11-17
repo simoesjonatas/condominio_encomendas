@@ -20,12 +20,21 @@ from condominio.views import home
 from encomendas.views import get_apartamentos, get_moradores
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth import views as auth_views
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", home, name="home"),
     path('encomendas/', include('encomendas.urls')),
     path('morador/', include('morador.urls')),
+    path("login/", auth_views.LoginView.as_view(
+        template_name="login.html"
+    ), name="login"),
+
+    path("logout/", auth_views.LogoutView.as_view(
+        next_page="login"
+    ), name="logout"),
 
     path('ajax/blocos/<int:bloco_id>/apartamentos/', get_apartamentos, name='get_apartamentos'),
     path('ajax/apartamentos/<int:apto_id>/moradores/', get_moradores, name='get_moradores'),
