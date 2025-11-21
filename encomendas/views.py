@@ -156,6 +156,31 @@ def historico_entregas(request):
         "entregues": entregues,
         "termo": termo,
     })
+    
+
+def buscar_apartamentos(request):
+    q = request.GET.get("q", "")
+    bloco_id = request.GET.get("bloco")
+
+    apartamentos = Apartamento.objects.filter(bloco_id=bloco_id, numero__icontains=q)
+
+    data = [{"id": ap.id, "numero": ap.numero} for ap in apartamentos]
+    return JsonResponse(data, safe=False)
+
+
+def buscar_moradores(request):
+    q = request.GET.get("q", "")
+    apt_id = request.GET.get("apartamento")
+
+    qs = Morador.objects.all()
+    if apt_id:
+        qs = qs.filter(apartamentos=apt_id)
+    if q:
+        qs = qs.filter(nome__icontains=q)
+
+    data = [{"id": m.id, "nome": m.nome} for m in qs.order_by("nome")]
+    return JsonResponse(data, safe=False)
+
 
 
 def buscar_encomendas(request):

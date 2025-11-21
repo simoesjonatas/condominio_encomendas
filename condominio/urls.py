@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from condominio.views import home
-from encomendas.views import get_apartamentos, get_moradores
+from encomendas.views import get_apartamentos, get_moradores, buscar_apartamentos, buscar_moradores
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
@@ -37,6 +37,8 @@ urlpatterns = [
     ), name="logout"),
 
     path('ajax/blocos/<int:bloco_id>/apartamentos/', get_apartamentos, name='get_apartamentos'),
+    path("ajax/buscar-apartamentos/", buscar_apartamentos, name="buscar_apartamentos"),
+    path("ajax/buscar-moradores/", buscar_moradores, name="buscar_moradores"),
     path('ajax/apartamentos/<int:apto_id>/moradores/', get_moradores, name='get_moradores'),
 ]
 

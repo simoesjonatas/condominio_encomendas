@@ -1,8 +1,13 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Nova Encomenda{% endblock %}
 
 {% block content %}
+
+{# CSS do Select2 (pode subir para um bloco extra_head se você tiver) #}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
 <div class="card p-4 shadow-sm">
 
@@ -24,20 +29,16 @@
             </select>
         </div>
 
-        <!-- APARTAMENTO -->
+        <!-- APARTAMENTO (Select2 AJAX) -->
         <div class="mb-3">
             <label class="form-label fw-semibold">Apartamento</label>
-            <select id="apartamento" name="apartamento" class="form-select" disabled>
-                <option value="">Selecione o bloco primeiro</option>
-            </select>
+            <select id="apartamento" name="apartamento" class="form-select"></select>
         </div>
 
-        <!-- MORADOR -->
+        <!-- MORADOR (Select2 AJAX dependente do apartamento) -->
         <div class="mb-3">
             <label class="form-label fw-semibold">Morador</label>
-            <select id="morador" name="morador" class="form-select" disabled>
-                <option value="">Selecione o apartamento</option>
-            </select>
+            <select id="morador" name="morador" class="form-select"></select>
         </div>
 
         <!-- Campos normais do formulário -->
@@ -58,44 +59,74 @@
     </form>
 </div>
 
+{# jQuery (necessário para Select2) #}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+{# JS do Select2 #}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
-// Ao selecionar bloco -> carregar apartamentos
-document.getElementById('bloco').addEventListener('change', function() {
-    const blocoId = this.value;
-    const aptSelect = document.getElementById('apartamento');
-    const morSelect = document.getElementById('morador');
-
-    aptSelect.innerHTML = "<option>Carregando...</option>";
-    morSelect.innerHTML = "<option>Selecione o apartamento</option>";
-    morSelect.disabled = true;
-
-    fetch(`/ajax/blocos/${blocoId}/apartamentos/`)
-        .then(res => res.json())
-        .then(data => {
-            aptSelect.disabled = false;
-            aptSelect.innerHTML = "<option value=''>Selecione</option>";
-            data.forEach(ap => {
-                aptSelect.innerHTML += `<option value="${ap.id}">${ap.numero}</option>`;
-            })
-        });
+// APARTAMENTO — Select2 AJAX filtrado pelo bloco
+$("#apartamento").select2({
+    theme: "bootstrap-5",
+    placeholder: "Digite o número do apartamento",
+    minimumInputLength: 1,
+    ajax: {
+        url: "/ajax/buscar-apartamentos/",
+        data: function(params) {
+            return {
+                q: params.term,          // texto digitado
+                bloco: $("#bloco").val() // bloco selecionado
+            };
+        },
+        processResults: function(data) {
+            return {
+                results: data.map(function(ap) {
+                    return {
+                        id: ap.id,
+                        text: ap.numero
+                    };
+                })
+            };
+        }
+    }
 });
 
-// Ao selecionar apartamento -> carregar moradores
-document.getElementById('apartamento').addEventListener('change', function() {
-    const aptoId = this.value;
-    const morSelect = document.getElementById('morador');
+// MORADOR — Select2 AJAX dependente do apartamento
+$("#morador").select2({
+    theme: "bootstrap-5",
+    placeholder: "Digite o nome do morador",
+    minimumInputLength: 1,
+    ajax: {
+        url: "/ajax/buscar-moradores/",
+        data: function(params) {
+            return {
+                q: params.term,                // texto digitado
+                apartamento: $("#apartamento").val() // apartamento selecionado
+            };
+        },
+        processResults: function(data) {
+            return {
+                results: data.map(function(m) {
+                    return {
+                        id: m.id,
+                        text: m.nome
+                    };
+                })
+            };
+        }
+    }
+});
 
-    morSelect.innerHTML = "<option>Carregando...</option>";
+// Quando mudar o bloco → limpar apartamento e morador
+$("#bloco").on("change", function () {
+    $("#apartamento").val(null).trigger("change");
+    $("#morador").val(null).trigger("change");
+});
 
-    fetch(`/ajax/apartamentos/${aptoId}/moradores/`)
-        .then(res => res.json())
-        .then(data => {
-            morSelect.disabled = false;
-            morSelect.innerHTML = "<option value=''>Selecione</option>";
-            data.forEach(m => {
-                morSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
-            })
-        });
+// Quando mudar o apartamento → limpar morador
+$("#apartamento").on("change", function () {
+    $("#morador").val(null).trigger("change");
 });
 </script>
 
