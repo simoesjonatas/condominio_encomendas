@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_list_or_404, get_object_or_40
 from django.utils import timezone
 from .forms import EncomendaForm, EntregaForm
 from .models import Encomenda
+from django.contrib import messages
 from django.http import JsonResponse
 from morador.models import Apartamento, Morador, Bloco
 from django.db.models import Q
@@ -39,21 +40,37 @@ def processar_qrcode_view(request):
 def entregar_encomenda(request, pk):
     encomenda = get_object_or_404(Encomenda, pk=pk)
 
+    # se já foi entregue, não deixa mais registrar
+    if encomenda.retirado:
+        messages.warning(
+            request,
+            f"Esta encomenda já foi entregue em {encomenda.data_retirada:%d/%m/%Y %H:%M} para {encomenda.retirado_por}."
+        )
+        return redirect("detalhes_encomenda", pk=encomenda.pk)
+
+
     if request.method == "POST":
         form = EntregaForm(request.POST)
-
+        # print("Dados do formulário recebidos:", request.POST)
         if form.is_valid():
             encomenda.retirado_por = form.cleaned_data["retirado_por"]
             encomenda.data_retirada = timezone.now()
             encomenda.retirado = True
 
-            # Converter assinatura base64 para arquivo PNG
-            assinatura_base64 = form.cleaned_data["assinatura_base64"]
+            assinatura_base64 = form.cleaned_data.get("assinatura_base64", "")
+            # print("Assinatura Base64 recebida:", assinatura_base64)
 
-            if assinatura_base64:
-                format, imgstr = assinatura_base64.split(";base64,")
-                file_data = ContentFile(base64.b64decode(imgstr), name=f"assinatura_{pk}.png")
-                encomenda.assinatura = file_data
+            # Apenas processa se veio algo válido
+            if assinatura_base64 and ";base64," in assinatura_base64:
+                try:
+                    format, imgstr = assinatura_base64.split(";base64,")
+                    file_data = ContentFile(
+                        base64.b64decode(imgstr),
+                        name=f"assinatura_{pk}.png"
+                    )
+                    encomenda.assinatura = file_data
+                except Exception as e:
+                    print("Erro ao salvar assinatura:", e)
 
             encomenda.save()
 
