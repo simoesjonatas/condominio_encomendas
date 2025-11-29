@@ -11,12 +11,16 @@ from django.utils.dateparse import parse_date
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from django.db.models import Count
+from urllib.parse import urlencode
 import datetime
 import re
 
 
 def ler_qrcode_view(request):
     return render(request, "encomendas/ler_qrcode.html")
+
+def ler_identificador_view(request):
+    return render(request, "encomendas/ler_identificador.html")
 
 
 def processar_qrcode_view(request):
@@ -188,13 +192,19 @@ def historico_entregas(request):
         "entregues": entregues,
         "termo": termo,
     })
-    
+
 
 def buscar_apartamentos(request):
     q = request.GET.get("q", "")
     bloco_id = request.GET.get("bloco")
 
-    apartamentos = Apartamento.objects.filter(bloco_id=bloco_id, numero__icontains=q)
+    if not bloco_id or bloco_id == "None":
+        return JsonResponse([], safe=False)
+
+    apartamentos = Apartamento.objects.filter(
+        bloco_id=bloco_id,
+        numero__icontains=q
+    )
 
     data = [{"id": ap.id, "numero": ap.numero} for ap in apartamentos]
     return JsonResponse(data, safe=False)
@@ -205,8 +215,10 @@ def buscar_moradores(request):
     apt_id = request.GET.get("apartamento")
 
     qs = Morador.objects.all()
-    if apt_id:
+
+    if apt_id and apt_id != "None":
         qs = qs.filter(apartamentos=apt_id)
+
     if q:
         qs = qs.filter(nome__icontains=q)
 
@@ -252,36 +264,82 @@ def detalhes_encomenda(request, pk):
 
 def nova_encomenda(request):
     hoje = timezone.now().date()
-
     blocos = Bloco.objects.all()
+
+    # recuperar os valores enviados de volta
+    selected_bloco = request.GET.get("bloco")
+    selected_apto = request.GET.get("apartamento")
+    selected_morador = request.GET.get("morador")
+    descricao = request.GET.get("descricao")
+    local = request.GET.get("local")
+
+    codigo_scaneado = request.GET.get("codigo", "")
 
     if request.method == "POST":
         form = EncomendaForm(request.POST)
+
         if form.is_valid():
             encomenda = form.save(commit=False)
 
-            # Obtém apartamento e morador enviados via select AJAX
             encomenda.apartamento_id = request.POST.get("apartamento")
             encomenda.morador_id = request.POST.get("morador")
 
-            # Sequencial diário
-            ultimo = Encomenda.objects.filter(data_recebimento=hoje).order_by('-sequencial_do_dia').first()
+            ultimo = Encomenda.objects.filter(
+                data_recebimento=hoje
+            ).order_by('-sequencial_do_dia').first()
+
             encomenda.sequencial_do_dia = (ultimo.sequencial_do_dia + 1) if ultimo else 1
 
             encomenda.data_recebimento = hoje
             encomenda.recebido_por = request.user
-            encomenda.save()
 
+            if codigo_scaneado:
+                encomenda.identificador_pacote = codigo_scaneado
+
+            encomenda.save()
             return redirect("lista_encomendas")
 
     else:
         form = EncomendaForm()
 
+        # repopular campos normais
+        if descricao:
+            form.fields["descricao"].initial = descricao
+        if local:
+            form.fields["local_armazenado"].initial = local
+        if codigo_scaneado:
+            form.fields["identificador_pacote"].initial = codigo_scaneado
+
     return render(request, "encomendas/nova_encomenda.html", {
         "form": form,
         "blocos": blocos,
-        "hoje": hoje,
+        "selected_bloco": selected_bloco,
+        "selected_apto": selected_apto,
+        "selected_morador": selected_morador,
     })
+
+
+def processar_identificador_view(request):
+    codigo = request.GET.get("codigo")
+
+    # resgatar parâmetros para não perder o formulário
+    bloco = request.GET.get("bloco", "")
+    apartamento = request.GET.get("apartamento", "")
+    morador = request.GET.get("morador", "")
+    descricao = request.GET.get("descricao", "")
+    local = request.GET.get("local", "")
+
+    params = urlencode({
+        "codigo": codigo,
+        "bloco": bloco,
+        "apartamento": apartamento,
+        "morador": morador,
+        "descricao": descricao,
+        "local": local,
+    })
+
+    return redirect(f"/encomendas/nova/?{params}")
+
 
 
 

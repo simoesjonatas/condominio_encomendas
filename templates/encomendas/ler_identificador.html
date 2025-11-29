@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Ler Código do Pacote{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3"><i class="bi bi-upc-scan"></i> Ler Identificador do Pacote</h3>
+
+<a href="javascript:history.back()" class="btn btn-outline-secondary mb-3">
+    <i class="bi bi-arrow-left"></i> Voltar
+</a>
+
+<p class="text-muted">Aponte a câmera para o QR code ou código de barras do pacote.</p>
+
+<video id="preview" style="width:100%; max-width:400px; border-radius:10px; background:#000;"></video>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+
+<script>
+    const video = document.getElementById("preview");
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }})
+        .then(stream => {
+            video.srcObject = stream;
+            video.play();
+            scanLoop();
+        })
+        .catch(err => {
+            alert("Erro ao acessar a câmera: " + err);
+        });
+
+    function scanLoop() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const qr = jsQR(imageData.data, canvas.width, canvas.height);
+
+            if (qr) {
+                const params = new URLSearchParams(window.location.search);
+                params.set("codigo", qr.data);
+
+                window.location.href = "/encomendas/nova/?" + params.toString();
+                return;
+            }
+
+        }
+        requestAnimationFrame(scanLoop);
+    }
+</script>
+
+{% endblock %}

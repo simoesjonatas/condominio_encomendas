@@ -2,7 +2,7 @@ from django.urls import path
 from .views import  (
     nova_encomenda, lista_encomendas, buscar_encomendas, detalhes_encomenda, entregar_encomenda, etiqueta_encomenda,
     historico_entregas, dashboard_view, imprimir_etiquetas_lote, confirmar_entrega_view,
-    ler_qrcode_view, processar_qrcode_view
+    ler_qrcode_view, processar_qrcode_view, ler_identificador_view,
     )
 
 urlpatterns = [
@@ -17,6 +17,9 @@ urlpatterns = [
     path("<int:pk>/confirmar/", confirmar_entrega_view, name="confirmar_entrega"),
     path("scan/", ler_qrcode_view, name="ler_qrcode"),
     path("scan/processar/", processar_qrcode_view, name="processar_qrcode"),
+
+    path("scan-identificador/", ler_identificador_view, name="ler_identificador"),
+
 
 
 

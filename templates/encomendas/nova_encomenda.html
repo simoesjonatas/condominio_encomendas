@@ -24,7 +24,10 @@
             <select id="bloco" class="form-select">
                 <option value="">Selecione um bloco</option>
                 {% for b in blocos %}
-                    <option value="{{ b.id }}">{{ b.nome }}</option>
+                    <option value="{{ b.id }}" 
+                        {% if selected_bloco == b.id|stringformat:"s" %}selected{% endif %}>
+                        {{ b.nome }}
+                    </option>
                 {% endfor %}
             </select>
         </div>
@@ -51,6 +54,26 @@
             {{ form.local_armazenado.label_tag }}
             {{ form.local_armazenado }}
         </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Identificador do Pacote (opcional)</label>
+
+            <div class="input-group">
+                {{ form.identificador_pacote }}
+                {% comment %} <a href="{% url 'ler_identificador' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-upc-scan"></i>
+                </a> {% endcomment %}
+                <button type="button" id="btn-scan" class="btn btn-outline-secondary">
+                    <i class="bi bi-upc-scan"></i>
+                </button>
+            </div>
+
+            <small class="text-muted">
+                Digite ou escaneie o código de barras / QR da embalagem.
+            </small>
+        </div>
+
+
 
         <button class="btn btn-primary w-100 mt-3">
             <i class="bi bi-check2-circle"></i> Registrar Encomenda
@@ -128,6 +151,64 @@ $("#bloco").on("change", function () {
 $("#apartamento").on("change", function () {
     $("#morador").val(null).trigger("change");
 });
+
+const selectedBloco = "{{ selected_bloco|default_if_none:'' }}";
+const selectedApto = "{{ selected_apto|default_if_none:'' }}";
+const selectedMorador = "{{ selected_morador|default_if_none:'' }}";
+
+if (selectedBloco) {
+    $("#bloco").val(selectedBloco);
+}
+
+// 1) Popula apartamentos primeiro
+if (selectedBloco && selectedApto) {
+
+    $.getJSON(`/ajax/buscar-apartamentos/?q=&bloco=${selectedBloco}`, function(data) {
+
+        const opts = data.map(function(ap) {
+            return new Option(ap.numero, ap.id, ap.id == selectedApto, ap.id == selectedApto);
+        });
+
+        $("#apartamento").append(opts).trigger("change");
+
+        // 2) Só depois de carregar apartamento → carregar morador
+        if (selectedMorador) {
+
+            $.getJSON(`/ajax/buscar-moradores/?q=&apartamento=${selectedApto}`, function(data) {
+
+                const optsMorador = data.map(function(m) {
+                    return new Option(m.nome, m.id, m.id == selectedMorador, m.id == selectedMorador);
+                });
+
+                $("#morador").append(optsMorador).trigger("change");
+            });
+        }
+    });
+}
+
+
+
+
+document.getElementById("btn-scan").addEventListener("click", function() {
+
+    const bloco = document.getElementById("bloco").value;
+    const apartamento = document.getElementById("apartamento").value;
+    const morador = document.getElementById("morador").value;
+
+    const descricao = document.querySelector("input[name='descricao']").value;
+    const local = document.querySelector("select[name='local_armazenado']").value;
+
+    const params = new URLSearchParams({
+        bloco: bloco,
+        apartamento: apartamento,
+        morador: morador,
+        descricao: descricao,
+        local: local
+    });
+
+    window.location.href = "/encomendas/scan-identificador/?" + params.toString();
+});
+
 </script>
 
 {% endblock %}

@@ -32,6 +32,12 @@ class Encomenda(models.Model):
     retirado_por = models.CharField(max_length=100, null=True, blank=True)
     assinatura = models.ImageField(upload_to='assinaturas/', null=True, blank=True)
     qr_code = models.ImageField(upload_to="qrcodes/", null=True, blank=True)
+    identificador_pacote = models.CharField(
+            max_length=100,
+            null=True,
+            blank=True,
+            help_text="Código lido do pacote (QR ou código de barras)")
+
 
     def gerar_qrcode(self):
         bloco = self.apartamento.bloco.nome.replace(" ", "").upper()
