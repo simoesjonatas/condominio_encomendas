@@ -12,8 +12,24 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 from django.db.models import Count
 import datetime
+import re
 
 
+def ler_qrcode_view(request):
+    return render(request, "encomendas/ler_qrcode.html")
+
+
+def processar_qrcode_view(request):
+    codigo = request.GET.get("codigo", "").strip()
+
+    # Exemplo de QR: BLOCO-A-101-11
+    match = re.search(r"(\d+)$", codigo)
+
+    if match:
+        encomenda_id = match.group(1)
+        return redirect("detalhes_encomenda", pk=encomenda_id)
+
+    return render(request, "encomendas/qr_invalido.html", {"codigo": codigo})
 
 
 def entregar_encomenda(request, pk):
@@ -97,6 +113,22 @@ def dashboard_view(request):
         "moradores_labels": moradores_labels,
         "moradores_totais": moradores_totais,
     })
+
+def confirmar_entrega_view(request, pk):
+    encomenda = get_object_or_404(Encomenda, pk=pk)
+
+    if encomenda.retirado:
+        return render(request, "encomendas/ja_entregue.html", {"e": encomenda})
+
+    if request.method == "POST":
+        encomenda.retirado = True
+        encomenda.data_retirada = timezone.now()
+        encomenda.retirado_por = "QR Code"
+        encomenda.save()
+        return redirect("detalhes_encomenda", pk=pk)
+
+    return render(request, "encomendas/confirmar_entrega_qr.html", {"e": encomenda})
+
 
 def imprimir_etiquetas_lote(request):
     if request.method != "POST":
@@ -221,7 +253,7 @@ def detalhes_encomenda(request, pk):
 def nova_encomenda(request):
     hoje = timezone.now().date()
 
-    blocos = Bloco.objects.all()  # <-- adicionar
+    blocos = Bloco.objects.all()
 
     if request.method == "POST":
         form = EncomendaForm(request.POST)

@@ -5,6 +5,11 @@ from django.contrib.auth.models import User
 from morador.models import Morador, Apartamento
 from django.core.files.base import ContentFile
 import base64
+import qrcode
+from django.core.files.base import ContentFile
+from io import BytesIO
+from django.conf import settings
+
 
 
 class Encomenda(models.Model): 
@@ -26,6 +31,38 @@ class Encomenda(models.Model):
     data_retirada = models.DateTimeField(null=True, blank=True)
     retirado_por = models.CharField(max_length=100, null=True, blank=True)
     assinatura = models.ImageField(upload_to='assinaturas/', null=True, blank=True)
+    qr_code = models.ImageField(upload_to="qrcodes/", null=True, blank=True)
+
+    def gerar_qrcode(self):
+        bloco = self.apartamento.bloco.nome.replace(" ", "").upper()
+        apto = self.apartamento.numero.replace(" ", "")
+        codigo = f"{bloco}-{apto}-{self.pk}"
+
+        qr = qrcode.make(codigo)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+
+        file_name = f"qrcode_{self.pk}.png"
+        self.qr_code.save(file_name, ContentFile(buffer.getvalue()), save=False)
+        self.save()
+
+
+    # def gerar_qrcode(self):
+    #     url = f"https://{settings.ALLOWED_HOSTS[0]}/encomendas/{self.pk}/confirmar/"
+
+    #     qr = qrcode.make(url)
+    #     buffer = BytesIO()
+    #     qr.save(buffer, format="PNG")
+    #     file_name = f"qrcode_{self.pk}.png"
+
+    #     self.qr_code.save(file_name, ContentFile(buffer.getvalue()), save=False)
+    #     self.save()
 
     def __str__(self):
         return f"#{self.sequencial_do_dia} - {self.morador}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if not self.qr_code:
+            self.gerar_qrcode()

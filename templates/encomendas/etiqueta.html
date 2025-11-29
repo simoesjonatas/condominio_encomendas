@@ -2,71 +2,77 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-
     <title>Etiqueta</title>
 
     <style>
-        /* Tamanho da página para impressão térmica */
+        /* Força Chrome a usar o tamanho real da etiqueta */
         @page {
-            size: 80mm 40mm; /* Largura x Altura: ajuste aqui para 60x40, 50x30, etc. */
+            size: 80mm 40mm; 
             margin: 0;
         }
 
-        /* Remover margens do body na impressão */
-        @media print {
-            body {
-                margin: 0;
-                padding: 0;
-            }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 80mm;
+            height: 40mm;
         }
 
         body {
-            margin: 0;
-            padding: 0;
             font-family: Arial, sans-serif;
         }
 
         .etiqueta {
-            box-sizing: border-box;
             width: 80mm;
             height: 40mm;
-            padding: 3mm 4mm;
+            padding: 2mm 3mm;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            border: 1px solid #000; /* se não quiser borda na etiqueta, pode tirar */
-        }
-
-        .linha {
-            font-size: 10pt;
-            line-height: 1.1;
         }
 
         .topo {
-            font-size: 11pt;
+            font-size: 10pt;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 2mm;
+            margin-bottom: 1mm;
         }
 
-        .numero {
-            font-size: 16pt;
-            font-weight: bold;
-            text-align: center;
-            padding: 1mm 0;
-            border: 1px dashed #000;
-            margin: 1mm 0;
-        }
-
-        .info-menor {
-            font-size: 8pt;
-            text-align: center;
+        .linha {
+            font-size: 9pt;
+            line-height: 1.1;
         }
 
         .texto-truncado {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            max-width: 60mm;
+        }
+
+        .numero-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1mm;
+        }
+
+        .numero {
+            font-size: 16pt;
+            font-weight: bold;
+            border: 1px dashed #000;
+            padding: 1mm 4mm;
+        }
+
+        .qr {
+            width: 22mm;
+            height: 22mm;
+        }
+
+        .info-menor {
+            font-size: 7pt;
+            text-align: center;
         }
     </style>
 </head>
@@ -85,31 +91,30 @@
         </div>
 
         {% if e.morador %}
-            <div class="linha texto-truncado">
-                <strong>Nome:</strong> {{ e.morador.nome }}
-            </div>
+        <div class="linha texto-truncado">
+            <strong>Nome:</strong> {{ e.morador.nome }}
+        </div>
         {% endif %}
 
-        <div class="numero">
-            #{{ e.sequencial_do_dia }}
-        </div>
-
         {% if e.descricao %}
-            <div class="linha texto-truncado">
-                <strong>Desc:</strong> {{ e.descricao }}
-            </div>
+        <div class="linha texto-truncado">
+            <strong>Desc:</strong> {{ e.descricao }}
+        </div>
         {% endif %}
     </div>
 
+    <div class="numero-area">
+        <div class="numero">#{{ e.sequencial_do_dia }}</div>
+        <img src="{{ e.qr_code.url }}" class="qr">
+    </div>
+
     <div class="info-menor">
-        Recebido: {{ e.data_recebimento }}<br>
-        Por: {{ e.recebido_por }}
+        Recebido: {{ e.data_recebimento }} &nbsp;|&nbsp; Por: {{ e.recebido_por }}
     </div>
 
 </div>
 
 <script>
-    // Abre já pronto pra impressão
     window.print();
 </script>
 

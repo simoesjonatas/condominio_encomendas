@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Ler QR Code{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3"><i class="bi bi-qr-code-scan"></i> Leitor de QR Code</h3>
+
+<a href="{% url 'buscar_encomendas' %}" class="btn btn-outline-secondary mb-3">
+    <i class="bi bi-arrow-left"></i> Voltar para busca
+</a>
+
+
+<p class="text-muted">Aponte a câmera para o QR Code da encomenda.</p>
+
+<div style="text-align:center;">
+    <video id="preview" style="width:100%; max-width:400px; border-radius:10px; background:#000;"></video>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+
+
+<script>
+    const video = document.getElementById('preview');
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+            video.srcObject = stream;
+            video.setAttribute("playsinline", true);
+            video.play();
+            scanLoop();
+        })
+        .catch(err => {
+            alert("Erro ao acessar a câmera: " + err);
+        });
+
+    function scanLoop() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+
+            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const qr = jsQR(imageData.data, canvas.width, canvas.height);
+
+            if (qr) {
+                const codigo = encodeURIComponent(qr.data);
+                window.location.href = `/encomendas/scan/processar/?codigo=${codigo}`;
+                return;
+            }
+        }
+        requestAnimationFrame(scanLoop);
+    }
+</script>
+
+{% endblock %}

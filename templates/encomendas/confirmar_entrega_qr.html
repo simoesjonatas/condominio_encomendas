@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Confirmar Retirada{% endblock %}
+
+{% block content %}
+
+<style>
+    .confirm-box {
+        max-width: 420px;
+        margin: 40px auto;
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .btn-confirm {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        width: 100%;
+        cursor: pointer;
+    }
+
+    .btn-confirm:hover {
+        background: #218838;
+    }
+
+    .btn-cancel {
+        display: block;
+        margin-top: 12px;
+        text-decoration: none;
+        color: #555;
+        font-size: .9rem;
+    }
+</style>
+
+<div class="confirm-box">
+
+    <h2>Confirmar Retirada</h2>
+
+    <p style="margin-top: 12px; font-size: 1.1rem;">
+        Deseja confirmar a retirada da encomenda:
+    </p>
+
+    <p style="font-weight: bold; font-size: 1.3rem; margin: 10px 0;">
+        {{ e.descricao|default:"(Sem descrição)" }}
+    </p>
+
+    <p style="font-size: .95rem; color:#555;">
+        Morador: <b>{{ e.morador }}</b><br>
+        Apartamento: <b>{{ e.apartamento }}</b><br>
+        Recebida em: <b>{{ e.data_recebimento }}</b>
+    </p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <button class="btn-confirm">Confirmar retirada agora</button>
+    </form>
+
+    <a href="{% url 'detalhes_encomenda' e.pk %}" class="btn-cancel">Cancelar</a>
+
+</div>
+
+{% endblock %}
