@@ -10,49 +10,155 @@
     <i class="bi bi-arrow-left"></i> Voltar
 </a>
 
-<p class="text-muted">Aponte a câmera para o QR code ou código de barras do pacote.</p>
+<div style="position:relative; text-align:center;">
+    
+    <!-- Scanner box (área de foco) -->
+    <div id="scanner-box" style="
+        position:absolute;
+        top:50%;
+        left:50%;
+        width:240px;
+        height:240px;
+        border:3px solid rgba(255,255,255,0.8);
+        border-radius:12px;
+        transform:translate(-50%, -50%);
+        z-index:10;
+        animation:pulse 2s infinite ease-in-out;
+        pointer-events:none;
+    "></div>
 
-<video id="preview" style="width:100%; max-width:400px; border-radius:10px; background:#000;"></video>
+    <!-- Vídeo do scanner -->
+    <video id="preview"
+        style="width:100%; max-width:480px; border-radius:10px; background:#000;">
+    </video>
+
+    <!-- Flash Toggle -->
+    <button id="flash-btn" class="btn btn-dark mt-3" style="display:none;">
+        <i class="bi bi-lightning-charge-fill"></i> Flash
+    </button>
+
+</div>
+
+<!-- Beep Sound -->
+<audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 
+<style>
+@keyframes pulse {
+    0% { box-shadow:0 0 0px 0 rgba(255,255,255,0.7); }
+    50% { box-shadow:0 0 20px 6px rgba(255,255,255,0.3); }
+    100% { box-shadow:0 0 0px 0 rgba(255,255,255,0.7); }
+}
+</style>
+
 <script>
-    const video = document.getElementById("preview");
+let video = document.getElementById("preview");
+let beep = document.getElementById("beep");
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }})
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
-            scanLoop();
-        })
-        .catch(err => {
-            alert("Erro ao acessar a câmera: " + err);
-        });
+let currentStream = null;
+let flashOn = false;
 
-    function scanLoop() {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const qr = jsQR(imageData.data, canvas.width, canvas.height);
-
-            if (qr) {
-                const params = new URLSearchParams(window.location.search);
-                params.set("codigo", qr.data);
-
-                window.location.href = "/encomendas/nova/?" + params.toString();
-                return;
+// === ABRIR CÂMERA ===========================================
+async function startCamera() {
+    try {
+        const constraints = {
+            video: {
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                advanced: [{ torch: false }]
             }
+        };
 
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        // Mostrar botão do flash se o device suportar
+        const track = currentStream.getVideoTracks()[0];
+        const capabilities = track.getCapabilities();
+
+        if ("torch" in capabilities) {
+            document.getElementById("flash-btn").style.display = "inline-block";
         }
-        requestAnimationFrame(scanLoop);
+
+        video.srcObject = currentStream;
+        video.setAttribute("playsinline", true);
+        video.play();
+        scanLoop();
+
+    } catch (err) {
+        alert("Erro ao acessar a câmera: " + err);
     }
+}
+
+startCamera();
+
+
+// === LIGAR / DESLIGAR FLASH ===================================
+document.getElementById("flash-btn").onclick = function () {
+    const track = currentStream.getVideoTracks()[0];
+    const capabilities = track.getCapabilities();
+
+    if (!("torch" in capabilities)) {
+        alert("O dispositivo não suporta flash.");
+        return;
+    }
+
+    flashOn = !flashOn;
+
+    track.applyConstraints({
+        advanced: [{ torch: flashOn }]
+    });
+
+    this.innerHTML = flashOn
+        ? '<i class="bi bi-lightning-charge"></i> Flash ON'
+        : '<i class="bi bi-lightning-charge-fill"></i> Flash';
+};
+
+
+// === ANÁLISE DO FRAME PARA QR CODE =============================
+function scanLoop() {
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const qr = jsQR(imageData.data, canvas.width, canvas.height);
+
+        if (qr) {
+
+            // Beep ✨
+            beep.play().catch(() => {});
+
+            // Brilho verde no scanner box
+            let box = document.getElementById("scanner-box");
+            box.style.border = "3px solid #00ff55";
+            box.style.boxShadow = "0 0 20px #00ff55";
+
+            setTimeout(() => {
+                box.style.border = "3px solid rgba(255,255,255,0.8)";
+                box.style.boxShadow = "none";
+            }, 500);
+
+            // Montar parâmetros e redirecionar
+            const params = new URLSearchParams(window.location.search);
+            params.set("codigo", qr.data);
+            window.location.href = "/encomendas/nova/?" + params.toString();
+
+            return;
+        }
+    }
+
+    requestAnimationFrame(scanLoop);
+}
+
 </script>
 
 {% endblock %}
