@@ -12,7 +12,7 @@
 
 <div style="position:relative; text-align:center;">
     
-    <!-- Scanner box (área de foco) -->
+    <!-- Caixa de foco -->
     <div id="scanner-box" style="
         position:absolute;
         top:50%;
@@ -27,22 +27,22 @@
         pointer-events:none;
     "></div>
 
-    <!-- Vídeo do scanner -->
+    <!-- Vídeo -->
     <video id="preview"
         style="width:100%; max-width:480px; border-radius:10px; background:#000;">
     </video>
 
-    <!-- Flash Toggle -->
+    <!-- Flash -->
     <button id="flash-btn" class="btn btn-dark mt-3" style="display:none;">
         <i class="bi bi-lightning-charge-fill"></i> Flash
     </button>
-
 </div>
 
-<!-- Beep Sound -->
+<!-- beep -->
 <audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
 <style>
 @keyframes pulse {
@@ -55,55 +55,49 @@
 <script>
 let video = document.getElementById("preview");
 let beep = document.getElementById("beep");
-
 let currentStream = null;
 let flashOn = false;
 
-// === ABRIR CÂMERA ===========================================
+// =========================================================
+//  ABRIR CÂMERA NORMAL (PARA QR CODE)
+// =========================================================
 async function startCamera() {
-    try {
-        const constraints = {
-            video: {
-                facingMode: "environment",
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                advanced: [{ torch: false }]
-            }
-        };
-
-        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-
-        // Mostrar botão do flash se o device suportar
-        const track = currentStream.getVideoTracks()[0];
-        const capabilities = track.getCapabilities();
-
-        if ("torch" in capabilities) {
-            document.getElementById("flash-btn").style.display = "inline-block";
+    const constraints = {
+        video: {
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            advanced: [{ torch: false }]
         }
+    };
 
-        video.srcObject = currentStream;
-        video.setAttribute("playsinline", true);
-        video.play();
-        scanLoop();
+    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = currentStream;
+    video.setAttribute("playsinline", true);
+    video.play();
 
-    } catch (err) {
-        alert("Erro ao acessar a câmera: " + err);
-    }
+    enableFlashIfSupported();
+    scanLoopQR();
+    startBarcodeScanner();
 }
 
 startCamera();
 
 
-// === LIGAR / DESLIGAR FLASH ===================================
-document.getElementById("flash-btn").onclick = function () {
+// =========================================================
+//  FLASH
+// =========================================================
+function enableFlashIfSupported() {
     const track = currentStream.getVideoTracks()[0];
     const capabilities = track.getCapabilities();
 
-    if (!("torch" in capabilities)) {
-        alert("O dispositivo não suporta flash.");
-        return;
+    if ("torch" in capabilities) {
+        document.getElementById("flash-btn").style.display = "inline-block";
     }
+}
 
+document.getElementById("flash-btn").onclick = function () {
+    const track = currentStream.getVideoTracks()[0];
     flashOn = !flashOn;
 
     track.applyConstraints({
@@ -116,9 +110,10 @@ document.getElementById("flash-btn").onclick = function () {
 };
 
 
-// === ANÁLISE DO FRAME PARA QR CODE =============================
-function scanLoop() {
-
+// =========================================================
+//  SCAN QR CODE (jsQR)
+// =========================================================
+function scanLoopQR() {
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
 
         const canvas = document.createElement("canvas");
@@ -133,30 +128,80 @@ function scanLoop() {
         const qr = jsQR(imageData.data, canvas.width, canvas.height);
 
         if (qr) {
-
-            // Beep ✨
-            beep.play().catch(() => {});
-
-            // Brilho verde no scanner box
-            let box = document.getElementById("scanner-box");
-            box.style.border = "3px solid #00ff55";
-            box.style.boxShadow = "0 0 20px #00ff55";
-
-            setTimeout(() => {
-                box.style.border = "3px solid rgba(255,255,255,0.8)";
-                box.style.boxShadow = "none";
-            }, 500);
-
-            // Montar parâmetros e redirecionar
-            const params = new URLSearchParams(window.location.search);
-            params.set("codigo", qr.data);
-            window.location.href = "/encomendas/nova/?" + params.toString();
-
+            processCode(qr.data);
             return;
         }
     }
 
-    requestAnimationFrame(scanLoop);
+    requestAnimationFrame(scanLoopQR);
+}
+
+
+// =========================================================
+//  SCAN BARRAS (QuaggaJS)
+// =========================================================
+function startBarcodeScanner() {
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: video,
+            constraints: {
+                facingMode: "environment"
+            }
+        },
+        decoder: {
+            readers: [
+                "code_128_reader",
+                "ean_reader",
+                "ean_8_reader",
+                "code_39_reader",
+                "upc_reader",
+                "upc_e_reader",
+                "codabar_reader",
+                "i2of5_reader",
+                "code_93_reader"
+            ]
+        }
+    }, function (err) {
+        if (err) {
+            console.log("Erro Quagga:", err);
+            return;
+        }
+        Quagga.start();
+    });
+
+    Quagga.onDetected(function(result) {
+        const code = result.codeResult.code;
+        if (code) {
+            processCode(code);
+            Quagga.stop();
+        }
+    });
+}
+
+
+// =========================================================
+//  PROCESSAR QUALQUER CÓDIGO LIDO (1D ou QR)
+// =========================================================
+function processCode(code) {
+    let box = document.getElementById("scanner-box");
+
+    // efeito verde
+    box.style.border = "3px solid #00ff55";
+    box.style.boxShadow = "0 0 20px #00ff55";
+
+    beep.play().catch(() => {});
+
+    setTimeout(() => {
+        box.style.border = "3px solid rgba(255,255,255,0.8)";
+        box.style.boxShadow = "none";
+    }, 400);
+
+    const params = new URLSearchParams(window.location.search);
+    params.set("codigo", code);
+
+    window.location.href = "/encomendas/nova/?" + params.toString();
 }
 
 </script>
