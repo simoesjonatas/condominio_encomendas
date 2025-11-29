@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<h1 style="margin-bottom:20px;">📦 Impressão de Encomendas</h1>
+
+<style>
+    .filtros-box {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 16px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+
+    .filtros-box label {
+        font-weight: bold;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .filtros-box input,
+    .filtros-box select {
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    th, td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    th {
+        background: #f8f8f8;
+        font-weight: bold;
+    }
+
+    tr:hover {
+        background: #fafafa;
+    }
+
+    .btn-select-all {
+        margin-bottom: 12px;
+    }
+</style>
+
+<form method="get" class="filtros-box">
+
+    <div>
+        <label>Data:</label>
+        <input type="date" name="data" value="{{ data }}">
+    </div>
+
+    <div>
+        <label>Bloco:</label>
+        <select name="bloco">
+            <option value="">Todos</option>
+            {% for b in blocos %}
+                <option value="{{ b.id }}" {% if bloco_selecionado == b.id|stringformat:'s' %}selected{% endif %}>
+                    {{ b.nome }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    {% comment %} <div style="display:flex; align-items:center; gap:6px; margin-top:22px;">
+        <input type="checkbox" name="pendentes" {% if pendentes %}checked{% endif %}>
+        <label style="margin:0;">Somente pendentes</label>
+    </div> {% endcomment %}
+
+    <button class="btn primary" style="height:40px; margin-top:22px;">Filtrar</button>
+</form>
+
+
+<form method="post" action="{% url 'imprimir_encomendas' %}">
+    {% csrf_token %}
+
+    <button type="button" class="btn btn-select-all" onclick="toggleSelectAll()">
+        Selecionar Todos
+    </button>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:40px;"></th>
+                <th>Seq</th>
+                <th>Bloco</th>
+                <th>Apto</th>
+                <th>Morador</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for e in encomendas %}
+            <tr>
+                <td><input type="checkbox" class="chk" name="ids" value="{{ e.id }}"></td>
+                <td>#{{ e.sequencial_do_dia }}</td>
+                <td>{{ e.apartamento.bloco.nome }}</td>
+                <td>{{ e.apartamento.numero }}</td>
+                <td>{{ e.morador.nome }}</td>
+                <td>{{ e.data_recebimento }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <button class="btn success" style="margin-top:20px;">
+        🖨 Imprimir Selecionadas
+    </button>
+</form>
+
+<script>
+    let selected = false;
+
+    function toggleSelectAll() {
+        selected = !selected;
+        const checks = document.querySelectorAll('.chk');
+
+        checks.forEach(ch => ch.checked = selected);
+
+        const btn = document.querySelector('.btn-select-all');
+        btn.innerHTML = selected ? "Desmarcar Todos" : "Selecionar Todos";
+    }
+</script>
+
+{% endblock %}

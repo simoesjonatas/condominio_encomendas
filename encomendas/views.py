@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.db.models import Count
 from urllib.parse import urlencode
 import datetime
+from datetime import date
 import re
 
 
@@ -359,14 +360,44 @@ def processar_identificador_view(request):
 
 
 
-
 def lista_encomendas(request):
-    encomendas = Encomenda.objects.filter(retirado=False).order_by('-data_recebimento', '-sequencial_do_dia')
+    encomendas = Encomenda.objects.filter(retirado=False)
+
+    # filtros
+    bloco = request.GET.get("bloco", "")
+    apto = request.GET.get("apto", "")
+    data = request.GET.get("data", "")
+    busca = request.GET.get("busca", "")
+
+    if bloco:
+        encomendas = encomendas.filter(apartamento__bloco__id=bloco)
+
+    if apto:
+        encomendas = encomendas.filter(apartamento__id=apto)
+
+    if data:
+        encomendas = encomendas.filter(data_recebimento=data)
+
+    if busca:
+        encomendas = encomendas.filter(
+            Q(morador__nome__icontains=busca) |
+            Q(descricao__icontains=busca)
+        )
+
+    encomendas = encomendas.order_by('-data_recebimento', '-sequencial_do_dia')
+
+    blocos = Bloco.objects.all()
+    apartamentos = Apartamento.objects.all()
 
     return render(request, 'encomendas/lista_encomendas.html', {
-        'encomendas': encomendas
+        'encomendas': encomendas,
+        'blocos': blocos,
+        'apartamentos': apartamentos,
+        'f_bloco': bloco,
+        'f_apto': apto,
+        'f_data': data,
+        'f_busca': busca,
     })
-
 def get_apartamentos(request, bloco_id):
     aps = Apartamento.objects.filter(bloco_id=bloco_id).values('id', 'numero')
     return JsonResponse(list(aps), safe=False)
@@ -374,3 +405,63 @@ def get_apartamentos(request, bloco_id):
 def get_moradores(request, apto_id):
     moradores = Morador.objects.filter(apartamentos__id=apto_id).values('id', 'nome')
     return JsonResponse(list(moradores), safe=False)
+
+
+
+def selecao_impressao(request):
+    hoje = date.today()
+
+    data = request.GET.get("data", str(hoje))
+    pendentes = request.GET.get("pendentes", "on") == "on"
+    bloco = request.GET.get("bloco", "")
+
+    encomendas = Encomenda.objects.select_related(
+        "apartamento", "apartamento__bloco", "morador"
+    ).all()
+
+    if data:
+        encomendas = encomendas.filter(data_recebimento=data)
+
+    if pendentes:
+        encomendas = encomendas.filter(retirado=False)
+
+    if bloco:
+        encomendas = encomendas.filter(apartamento__bloco__id=bloco)
+
+    blocos = Bloco.objects.all()
+
+    return render(request, "encomendas/selecao_impressao.html", {
+        "encomendas": encomendas,
+        "data": data,
+        "pendentes": pendentes,
+        "blocos": blocos,
+        "bloco_selecionado": bloco,
+    })
+
+def imprimir_encomendas(request):
+    encomendas = Encomenda.objects.filter(retirado=False)
+
+    # filtros da URL
+    bloco = request.GET.get("bloco", "")
+    apto = request.GET.get("apto", "")
+    data = request.GET.get("data", "")
+    busca = request.GET.get("busca", "")
+
+    if bloco:
+        encomendas = encomendas.filter(apartamento__bloco__id=bloco)
+
+    if apto:
+        encomendas = encomendas.filter(apartamento__id=apto)
+
+    if data:
+        encomendas = encomendas.filter(data_recebimento=data)
+
+    if busca:
+        encomendas = encomendas.filter(
+            Q(morador__nome__icontains=busca) |
+            Q(descricao__icontains=busca)
+        )
+
+    return render(request, "encomendas/impressao_massa.html", {
+        "lista": encomendas
+    })

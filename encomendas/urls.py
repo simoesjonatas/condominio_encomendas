@@ -3,6 +3,7 @@ from .views import  (
     nova_encomenda, lista_encomendas, buscar_encomendas, detalhes_encomenda, entregar_encomenda, etiqueta_encomenda,
     historico_entregas, dashboard_view, imprimir_etiquetas_lote, confirmar_entrega_view,
     ler_qrcode_view, processar_qrcode_view, ler_identificador_view,
+    selecao_impressao, imprimir_encomendas,
     )
 
 urlpatterns = [
@@ -20,6 +21,8 @@ urlpatterns = [
 
     path("scan-identificador/", ler_identificador_view, name="ler_identificador"),
 
+    path("impressao/", selecao_impressao, name="selecao_impressao"),
+    path("imprimir/", imprimir_encomendas, name="imprimir_encomendas"),
 
 
 
