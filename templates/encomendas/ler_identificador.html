@@ -23,9 +23,12 @@
         border-radius:12px;
         transform:translate(-50%, -50%);
         z-index:10;
-        animation:pulse 2s infinite ease-in-out;
         pointer-events:none;
-    "></div>
+        overflow:hidden;
+    ">
+        <!-- Laser vermelho animado -->
+        <div id="laser-line"></div>
+    </div>
 
     <!-- Vídeo -->
     <video id="preview"
@@ -41,6 +44,7 @@
 <!-- beep -->
 <audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
+<!-- Bibliotecas -->
 <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
@@ -49,6 +53,27 @@
     0% { box-shadow:0 0 0px 0 rgba(255,255,255,0.7); }
     50% { box-shadow:0 0 20px 6px rgba(255,255,255,0.3); }
     100% { box-shadow:0 0 0px 0 rgba(255,255,255,0.7); }
+}
+
+#laser-line {
+    position:absolute;
+    left:0;
+    right:0;
+    height:3px;
+    background: linear-gradient(
+        to right,
+        rgba(255,0,0,0),
+        rgba(255,0,0,0.95),
+        rgba(255,0,0,0)
+    );
+    box-shadow:0 0 10px rgba(255,0,0,0.8);
+    animation:laser-sweep 2s infinite ease-in-out;
+}
+
+@keyframes laser-sweep {
+    0% { top:5%; }
+    50% { top:90%; }
+    100% { top:5%; }
 }
 </style>
 
@@ -59,7 +84,7 @@ let currentStream = null;
 let flashOn = false;
 
 // =========================================================
-//  ABRIR CÂMERA NORMAL (PARA QR CODE)
+// INICIAR CÂMERA
 // =========================================================
 async function startCamera() {
     const constraints = {
@@ -77,15 +102,14 @@ async function startCamera() {
     video.play();
 
     enableFlashIfSupported();
-    scanLoopQR();
-    startBarcodeScanner();
+    scanLoopQR();        // QR Code
+    startBarcodeScanner(); // Cod. Barras 1D
 }
-
 startCamera();
 
 
 // =========================================================
-//  FLASH
+// FLASH
 // =========================================================
 function enableFlashIfSupported() {
     const track = currentStream.getVideoTracks()[0];
@@ -111,7 +135,7 @@ document.getElementById("flash-btn").onclick = function () {
 
 
 // =========================================================
-//  SCAN QR CODE (jsQR)
+// LEITOR DE QR CODE (jsQR)
 // =========================================================
 function scanLoopQR() {
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -138,7 +162,7 @@ function scanLoopQR() {
 
 
 // =========================================================
-//  SCAN BARRAS (QuaggaJS)
+// LEITOR DE CÓDIGO DE BARRAS 1D (QuaggaJS)
 // =========================================================
 function startBarcodeScanner() {
     Quagga.init({
@@ -146,9 +170,7 @@ function startBarcodeScanner() {
             name: "Live",
             type: "LiveStream",
             target: video,
-            constraints: {
-                facingMode: "environment"
-            }
+            constraints: { facingMode: "environment" }
         },
         decoder: {
             readers: [
@@ -163,9 +185,9 @@ function startBarcodeScanner() {
                 "code_93_reader"
             ]
         }
-    }, function (err) {
+    }, function(err) {
         if (err) {
-            console.log("Erro Quagga:", err);
+            console.error("Erro Quagga:", err);
             return;
         }
         Quagga.start();
@@ -182,12 +204,12 @@ function startBarcodeScanner() {
 
 
 // =========================================================
-//  PROCESSAR QUALQUER CÓDIGO LIDO (1D ou QR)
+// PROCESSAR QUALQUER CÓDIGO LIDO (QR ou BARRAS)
 // =========================================================
 function processCode(code) {
     let box = document.getElementById("scanner-box");
 
-    // efeito verde
+    // Efeito verde
     box.style.border = "3px solid #00ff55";
     box.style.boxShadow = "0 0 20px #00ff55";
 
