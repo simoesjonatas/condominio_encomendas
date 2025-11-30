@@ -34,19 +34,24 @@ def novo_bloco(request):
 
 # Listar apartamentos
 def lista_apartamentos(request):
-    termo = request.GET.get("q", "")
+    bloco_id = request.GET.get("bloco", "")
+    numero = request.GET.get("numero", "")
 
-    qs = Apartamento.objects.select_related("bloco")
+    apartamentos = Apartamento.objects.select_related("bloco").all()
 
-    if termo:
-        qs = qs.filter(
-            Q(numero__icontains=termo) |
-            Q(bloco__nome__icontains=termo)
-        )
+    if bloco_id:
+        apartamentos = apartamentos.filter(bloco_id=bloco_id)
+
+    if numero:
+        apartamentos = apartamentos.filter(numero__icontains=numero)
+
+    blocos = Bloco.objects.all().order_by("id")
 
     return render(request, "morador/lista_apartamentos.html", {
-        "apartamentos": qs,
-        "termo": termo,
+        "apartamentos": apartamentos,
+        "blocos": blocos,
+        "bloco_id": bloco_id,
+        "numero": numero,
     })
 
 

@@ -7,15 +7,36 @@
     <i class="bi bi-door-open"></i> Apartamentos
 </h3>
 
-<!-- BUSCA -->
+<!-- FILTROS -->
 <form method="get" class="mb-3">
-    <input
-        type="text"
-        class="form-control"
-        name="q"
-        placeholder="Buscar por nº ou bloco..."
-        value="{{ termo }}"
-    >
+    <div class="row g-2">
+        <div class="col-4">
+            <select name="bloco" class="form-control">
+                <option value="">Todos os blocos</option>
+                {% for b in blocos %}
+                    <option value="{{ b.id }}" {% if bloco_id|default:'' == b.id|stringformat:"s" %}selected{% endif %}>
+                        Bloco {{ b.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-5">
+            <input
+                type="text"
+                name="numero"
+                class="form-control"
+                placeholder="Nº apto (ex: 101)"
+                value="{{ numero }}"
+            >
+        </div>
+
+        <div class="col-3">
+            <button class="btn btn-primary w-100">
+                Filtrar
+            </button>
+        </div>
+    </div>
 </form>
 
 <a href="{% url 'novo_apartamento' %}" class="btn btn-primary mb-3 w-100">
