@@ -7,6 +7,17 @@
     <i class="bi bi-building"></i> Blocos
 </h3>
 
+<!-- CAMPO DE BUSCA -->
+<form method="get" class="mb-3">
+    <input 
+        type="text" 
+        class="form-control"
+        name="q"
+        placeholder="Buscar bloco..."
+        value="{{ termo }}"
+    >
+</form>
+
 <a href="{% url 'novo_bloco' %}" class="btn btn-primary mb-3 w-100">
     <i class="bi bi-plus-circle"></i> Novo Bloco
 </a>
@@ -17,7 +28,7 @@
             <h5 class="mb-0">{{ b.nome }}</h5>
         </div>
     {% empty %}
-        <p class="text-muted">Nenhum bloco cadastrado.</p>
+        <p class="text-muted">Nenhum bloco encontrado.</p>
     {% endfor %}
 </div>
 {% endblock %}

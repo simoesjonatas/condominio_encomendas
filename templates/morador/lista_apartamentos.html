@@ -7,6 +7,17 @@
     <i class="bi bi-door-open"></i> Apartamentos
 </h3>
 
+<!-- BUSCA -->
+<form method="get" class="mb-3">
+    <input
+        type="text"
+        class="form-control"
+        name="q"
+        placeholder="Buscar por nº ou bloco..."
+        value="{{ termo }}"
+    >
+</form>
+
 <a href="{% url 'novo_apartamento' %}" class="btn btn-primary mb-3 w-100">
     <i class="bi bi-plus-circle"></i> Novo Apartamento
 </a>
@@ -15,10 +26,10 @@
     {% for a in apartamentos %}
         <div class="list-group-item d-flex justify-content-between">
             <strong>Apto {{ a.numero }}</strong>
-            <span class="text-muted">{{ a.bloco.nome }}</span>
+            <span class="text-muted">Bloco {{ a.bloco.nome }}</span>
         </div>
     {% empty %}
-        <p class="text-muted">Nenhum apartamento cadastrado.</p>
+        <p class="text-muted">Nenhum apartamento encontrado.</p>
     {% endfor %}
 </div>
 

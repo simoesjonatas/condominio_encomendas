@@ -1,11 +1,22 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Bloco, Apartamento, Morador
 from .forms import BlocoForm, ApartamentoForm, MoradorForm
+from django.db.models import Q
 
 # Listar blocos
 def lista_blocos(request):
-    blocos = Bloco. objects.all()
-    return render(request, "morador/lista_blocos.html", {"blocos": blocos})
+    termo = request.GET.get("q", "")  # pega ?q=...
+    
+    if termo:
+        blocos = Bloco.objects.filter(nome__icontains=termo)
+    else:
+        blocos = Bloco.objects.all()
+
+    return render(request, "morador/lista_blocos.html", {
+        "blocos": blocos,
+        "termo": termo,
+    })
+
 
 
 # Criar bloco
@@ -23,9 +34,19 @@ def novo_bloco(request):
 
 # Listar apartamentos
 def lista_apartamentos(request):
-    apartamentos = Apartamento.objects.select_related("bloco").all()
+    termo = request.GET.get("q", "")
+
+    qs = Apartamento.objects.select_related("bloco")
+
+    if termo:
+        qs = qs.filter(
+            Q(numero__icontains=termo) |
+            Q(bloco__nome__icontains=termo)
+        )
+
     return render(request, "morador/lista_apartamentos.html", {
-        "apartamentos": apartamentos
+        "apartamentos": qs,
+        "termo": termo,
     })
 
 
