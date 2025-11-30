@@ -4,7 +4,7 @@ class Bloco(models.Model):
     nome = models.CharField(max_length=50, unique=True)
 
     class Meta:
-        ordering = ["nome"]
+        ordering = ["id"]
 
     def __str__(self):
         return self.nome
@@ -16,7 +16,7 @@ class Apartamento(models.Model):
 
     class Meta:
         unique_together = ("numero", "bloco")
-        ordering = ["bloco__nome", "numero"]
+        ordering = ["bloco__id", "numero"]
 
     def __str__(self):
         return f"{self.bloco.nome} - Apto {self.numero}"
