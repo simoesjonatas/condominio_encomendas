@@ -9,6 +9,14 @@
         <i class="bi bi-pencil"></i> Editar {{ morador.nome }}
     </h3>
 
+    <!-- MOSTRAR ERROS -->
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        <strong>Erros no formulário:</strong>
+        {{ form.errors }}
+    </div>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
 
@@ -18,15 +26,61 @@
         </div>
 
         <div class="mb-3">
-            {{ form.apartamentos.label_tag }}
-            {{ form.apartamentos }}
+            {{ form.bloco.label_tag }}
+            {{ form.bloco }}
         </div>
+
+        <div class="mb-3">
+            {{ form.apartamento.label_tag }}
+            {{ form.apartamento }}
+        </div>
+
+        <!-- Campo real ManyToMany escondido -->
+        {{ form.apartamentos }}
 
         <button class="btn btn-primary w-100">
             <i class="bi bi-check-circle"></i> Atualizar
         </button>
-
     </form>
 
 </div>
+
+<!-- Mesmo JavaScript do novo morador -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const blocoSelect = document.getElementById("bloco-select");
+    const aptSelect = document.getElementById("apartamento-select");
+    const hiddenApts = document.getElementById("id_apartamentos");
+
+    blocoSelect.addEventListener("change", function () {
+        const blocoId = this.value;
+        aptSelect.innerHTML = "<option>Carregando...</option>";
+        hiddenApts.innerHTML = "";
+
+        if (!blocoId) return;
+
+        fetch(`/ajax/bloco/${blocoId}/apartamentos/`)
+            .then(res => res.json())
+            .then(data => {
+                aptSelect.innerHTML = '<option value="">Selecione...</option>';
+
+                data.forEach(apt => {
+                    aptSelect.innerHTML += `<option value="${apt.id}">${apt.numero}</option>`;
+                });
+            });
+    });
+
+    aptSelect.addEventListener("change", function () {
+        hiddenApts.innerHTML = "";
+
+        if (this.value) {
+            const opt = document.createElement("option");
+            opt.value = this.value;
+            opt.selected = true;
+            hiddenApts.appendChild(opt);
+        }
+    });
+});
+</script>
+
 {% endblock %}

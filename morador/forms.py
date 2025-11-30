@@ -26,18 +26,55 @@ class ApartamentoForm(forms.ModelForm):
         }
 
 class MoradorForm(forms.ModelForm):
+    bloco = forms.ModelChoiceField(
+        queryset=Bloco.objects.all(),
+        required=True,
+        label="Bloco",
+        widget=forms.Select(attrs={
+            "class": "form-select",
+            "id": "bloco-select",
+        }),
+    )
+
+    apartamento = forms.ModelChoiceField(
+        queryset=Apartamento.objects.none(),
+        required=True,
+        label="Apartamento",
+        widget=forms.Select(attrs={
+            "class": "form-select",
+            "id": "apartamento-select",
+        }),
+    )
+
     class Meta:
         model = Morador
         fields = ["nome", "apartamentos"]
         widgets = {
             "nome": forms.TextInput(attrs={
                 "class": "form-control",
-                "placeholder": "Nome do morador"
+                "placeholder": "Nome do morador",
             }),
-
-            # Select múltiplo para os apartamentos
             "apartamentos": forms.SelectMultiple(attrs={
-                "class": "form-select",
-                "size": 5   # bom para mobile e desktop
+                "class": "d-none",
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # SE FOR POST → pegar bloco selecionado
+        if "bloco" in self.data:
+            try:
+                bloco_id = int(self.data.get("bloco"))
+                self.fields["apartamento"].queryset = Apartamento.objects.filter(bloco_id=bloco_id)
+            except (ValueError, TypeError):
+                pass
+
+        # SE FOR EDIÇÃO
+        elif self.instance.pk:
+            apartamentos = self.instance.apartamentos.all()
+            if apartamentos:
+                bloco = apartamentos.first().bloco
+                self.fields["bloco"].initial = bloco
+                self.fields["apartamento"].queryset = Apartamento.objects.filter(bloco=bloco)
+                self.fields["apartamento"].initial = apartamentos.first()

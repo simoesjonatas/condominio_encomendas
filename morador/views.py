@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Bloco, Apartamento, Morador
 from .forms import BlocoForm, ApartamentoForm, MoradorForm
 from django.db.models import Q
+from django.http import JsonResponse
+
 
 # Listar blocos
 def lista_blocos(request):
@@ -99,11 +101,17 @@ def lista_moradores(request):
         "apartamentos": apartamentos,
     })
 
+def ajax_apartamentos_por_bloco(request, bloco_id):
+    apartamentos = Apartamento.objects.filter(bloco_id=bloco_id).order_by("numero")
+    data = [{"id": a.id, "numero": a.numero} for a in apartamentos]
+    return JsonResponse(data, safe=False)
 # Criar morador
 def novo_morador(request):
     if request.method == "POST":
+        print("aq")
         form = MoradorForm(request.POST)
         if form.is_valid():
+            print("aq")
             form.save()
             return redirect("lista_moradores")
     else:
