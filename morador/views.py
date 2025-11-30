@@ -72,11 +72,32 @@ def novo_apartamento(request):
 
 # Listar moradores
 def lista_moradores(request):
-    moradores = Morador.objects.all()
-    return render(request, "morador/lista_moradores.html", {
-        "moradores": moradores
-    })
+    nome = request.GET.get("nome", "")
+    bloco_id = request.GET.get("bloco", "")
+    apartamento_id = request.GET.get("apartamento", "")
 
+    moradores = Morador.objects.all().prefetch_related("apartamentos")
+
+    if nome:
+        moradores = moradores.filter(nome__icontains=nome)
+
+    if bloco_id:
+        moradores = moradores.filter(apartamentos__bloco_id=bloco_id).distinct()
+
+    if apartamento_id:
+        moradores = moradores.filter(apartamentos__id=apartamento_id).distinct()
+
+    blocos = Bloco.objects.all().order_by("id")
+    apartamentos = Apartamento.objects.all().order_by("numero")
+
+    return render(request, "morador/lista_moradores.html", {
+        "moradores": moradores,
+        "nome": nome,
+        "bloco_id": bloco_id,
+        "apartamento_id": apartamento_id,
+        "blocos": blocos,
+        "apartamentos": apartamentos,
+    })
 
 # Criar morador
 def novo_morador(request):

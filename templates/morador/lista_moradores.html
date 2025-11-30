@@ -7,6 +7,53 @@
     <i class="bi bi-people"></i> Moradores
 </h3>
 
+<!-- FILTROS -->
+<form method="get" class="mb-3">
+
+    <div class="row g-2">
+
+        <div class="col-12">
+            <input 
+                type="text" 
+                class="form-control"
+                name="nome"
+                placeholder="Buscar por nome..."
+                value="{{ nome }}"
+            >
+        </div>
+
+        <div class="col-6">
+            <select name="bloco" class="form-control">
+                <option value="">Todos os blocos</option>
+                {% for b in blocos %}
+                    <option value="{{ b.id }}" {% if bloco_id|default:'' == b.id|stringformat:"s" %}selected{% endif %}>
+                        Bloco {{ b.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-6">
+            <select name="apartamento" class="form-control">
+                <option value="">Aptos</option>
+                {% for a in apartamentos %}
+                    <option value="{{ a.id }}" {% if apartamento_id|default:'' == a.id|stringformat:"s" %}selected{% endif %}>
+                        {{ a.numero }} (Bloco {{ a.bloco.nome }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-12">
+            <button class="btn btn-primary w-100">
+                Filtrar
+            </button>
+        </div>
+
+    </div>
+
+</form>
+
 <a href="{% url 'novo_morador' %}" class="btn btn-primary mb-3 w-100">
     <i class="bi bi-plus-circle"></i> Novo Morador
 </a>
@@ -16,16 +63,18 @@
         <a href="{% url 'editar_morador' m.pk %}" class="list-group-item list-group-item-action">
             <strong>{{ m.nome }}</strong>
             <br>
+
             {% if m.apartamentos.all %}
                 <small class="text-muted">
                     {% for apt in m.apartamentos.all %}
-                        {{ apt }}{% if not forloop.last %}, {% endif %}
+                        Apto {{ apt.numero }} (Bloco {{ apt.bloco.nome }})
+                        {% if not forloop.last %}, {% endif %}
                     {% endfor %}
                 </small>
             {% endif %}
         </a>
     {% empty %}
-        <p class="text-muted">Nenhum morador cadastrado.</p>
+        <p class="text-muted">Nenhum morador encontrado.</p>
     {% endfor %}
 </div>
 
