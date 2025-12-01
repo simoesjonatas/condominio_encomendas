@@ -22,6 +22,7 @@ class Encomenda(models.Model):
     local_armazenado = models.CharField(max_length=50, choices=[
         ('estante', 'Estante'),
         ('chao', 'Chão'),
+        ('carta', 'Carta'),
         ('outro', 'Outro local')
     ], default='estante')
 
