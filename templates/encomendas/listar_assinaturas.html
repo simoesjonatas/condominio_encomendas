@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Assinaturas das Encomendas{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3">
+    <i class="bi bi-pencil-square"></i> Assinaturas Registradas
+</h3>
+
+<form method="get" action="" class="row g-3 mb-4">
+
+    <div class="col-md-3">
+        <label class="form-label">Data início</label>
+        <input type="date" name="data_inicio" class="form-control"
+               value="{{ data_inicio|default:'' }}">
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Data fim</label>
+        <input type="date" name="data_fim" class="form-control"
+               value="{{ data_fim }}">
+    </div>
+
+    <div class="col-md-2 align-self-end">
+        <button class="btn btn-success w-100">
+            <i class="bi bi-search"></i> Filtrar
+        </button>
+    </div>
+
+    <div class="col-md-3 align-self-end">
+        <a class="btn btn-primary w-100"
+           href="{% url 'baixar_assinaturas_zip' %}?data_inicio={{ data_inicio }}&data_fim={{ data_fim }}">
+            <i class="bi bi-download"></i> Baixar ZIP
+        </a>
+    </div>
+
+</form>
+
+<div class="col-md-3 align-self-end">
+    <a class="btn btn-danger w-100"
+       href="{% url 'confirmar_apagar_assinaturas' %}?data_inicio={{ data_inicio }}&data_fim={{ data_fim }}">
+        <i class="bi bi-trash-fill"></i> Apagar Assinaturas
+    </a>
+</div>
+
+
+<div class="table-responsive">
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Morador</th>
+            <th>Apto</th>
+            <th>Data da Retirada</th>
+            <th>Assinatura</th>
+            <th></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for e in encomendas %}
+        <tr>
+            <td>#{{ e.sequencial_do_dia }}</td>
+            <td>{{ e.retirado_por }}</td>
+            <td>{{ e.apartamento.bloco.nome }} / {{ e.apartamento.numero }}</td>
+            <td>{{ e.data_retirada|date:"d/m/Y H:i" }}</td>
+
+            <td>
+                {% if e.assinatura %}
+                    <img src="{{ e.assinatura.url }}" style="height:40px; border:1px solid #ccc;">
+                {% else %}
+                    <span class="text-muted">Sem assinatura</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {% if e.assinatura %}
+                    <a href="{% url 'download_assinatura' e.pk %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-download"></i> Baixar
+                    </a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center text-muted">Nenhuma assinatura encontrada.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+
+
+<!-- PAGINAÇÃO -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Paginaçao">
+    <ul class="pagination justify-content-center">
+
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.previous_page_number }}&data_inicio={{ data_inicio }}&data_fim={{ data_fim }}">
+                Anterior
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+            <a class="page-link"
+               href="?page={{ num }}&data_inicio={{ data_inicio|default:'' }}&data_fim={{ data_fim|default:'' }}">
+                {{ num }}
+            </a>
+        </li>
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.next_page_number }}&data_inicio={{ data_inicio }}&data_fim={{ data_fim }}">
+                Próxima
+            </a>
+        </li>
+        {% endif %}
+
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock %}

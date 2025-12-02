@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmar Exclusão de Assinaturas{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3 text-danger">
+    <i class="bi bi-exclamation-triangle-fill"></i> Apagar somente as assinaturas?
+</h3>
+
+<div class="alert alert-warning">
+    <h5 class="fw-bold">⚠️ ATENÇÃO — ESTA AÇÃO É PERMANENTE</h5>
+
+    <p>
+        Você está prestes a <strong class="text-danger">excluir APENAS as imagens das assinaturas</strong>
+        do período selecionado.
+    </p>
+
+    <p>
+        <strong>NÃO será apagado nenhum registro de entrega.</strong><br>
+        <span class="text-muted">
+            (A encomenda continuará aparecendo normalmente no sistema, com todos os dados.)
+        </span>
+    </p>
+
+    <p>
+        O objetivo é apenas <strong>liberar espaço no servidor</strong> removendo os arquivos de imagem.
+    </p>
+
+    <p class="fw-bold text-danger">
+        Você fez o backup das assinaturas antes de continuar?
+    </p>
+</div>
+
+<h5>Assinaturas encontradas no período: {{ encomendas|length }}</h5>
+
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Morador</th>
+            <th>Apto</th>
+            <th>Data</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in encomendas %}
+        <tr>
+            <td>{{ e.id }}</td>
+            <td>{{ e.retirado_por }}</td>
+            <td>{{ e.apartamento.bloco.nome }} / {{ e.apartamento.numero }}</td>
+            <td>{{ e.data_retirada|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<form method="post" action="{% url 'executar_apagar_assinaturas' %}">
+    {% csrf_token %}
+    <input type="hidden" name="data_inicio" value="{{ data_inicio }}">
+    <input type="hidden" name="data_fim" value="{{ data_fim }}">
+
+    <div class="mb-3">
+        <label class="form-label">
+            Para confirmar a exclusão das assinaturas, digite <strong>CONFIRMAR</strong> abaixo:
+        </label>
+        <input type="text"
+               name="confirm_text"
+               class="form-control"
+               placeholder="Digite CONFIRMAR para prosseguir"
+               required>
+        <small class="text-muted">
+            Esta ação apagará apenas as imagens das assinaturas, mantendo os registros das entregas.
+        </small>
+    </div>
+
+    <button class="btn btn-danger btn-lg w-100 mt-3">
+        <i class="bi bi-trash-fill"></i>
+        SIM, apagar apenas as assinaturas para liberar espaço
+    </button>
+</form>
+
+
+<a href="{% url 'listar_assinaturas' %}" class="btn btn-secondary w-100 mt-3">
+    Cancelar
+</a>
+
+{% endblock %}
