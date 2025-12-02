@@ -39,8 +39,16 @@ class Encomenda(models.Model):
             blank=True,
             help_text="Código lido do pacote (QR ou código de barras)")
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._old_apartamento_id = self.apartamento_id
 
     def gerar_qrcode(self):
+        # 1. Deleta o arquivo anterior (se existir)
+        if self.qr_code:
+            self.qr_code.delete(save=False)
+
+        # 2. Gera novo código
         bloco = self.apartamento.bloco.nome.replace(" ", "").upper()
         apto = self.apartamento.numero.replace(" ", "")
         codigo = f"{bloco}-{apto}-{self.pk}"
@@ -49,27 +57,18 @@ class Encomenda(models.Model):
         buffer = BytesIO()
         qr.save(buffer, format="PNG")
 
+        # 3. Nome fixo para não criar arquivos duplicados
         file_name = f"qrcode_{self.pk}.png"
+
         self.qr_code.save(file_name, ContentFile(buffer.getvalue()), save=False)
-        self.save()
+        super().save(update_fields=["qr_code"])
 
-
-    # def gerar_qrcode(self):
-    #     url = f"https://{settings.ALLOWED_HOSTS[0]}/encomendas/{self.pk}/confirmar/"
-
-    #     qr = qrcode.make(url)
-    #     buffer = BytesIO()
-    #     qr.save(buffer, format="PNG")
-    #     file_name = f"qrcode_{self.pk}.png"
-
-    #     self.qr_code.save(file_name, ContentFile(buffer.getvalue()), save=False)
-    #     self.save()
-
-    def __str__(self):
-        return f"#{self.sequencial_do_dia} - {self.morador}"
-    
     def save(self, *args, **kwargs):
+        apartamento_mudou = self.apartamento_id != self._old_apartamento_id
+
         super().save(*args, **kwargs)
 
-        if not self.qr_code:
+        if apartamento_mudou:
             self.gerar_qrcode()
+
+        self._old_apartamento_id = self.apartamento_id

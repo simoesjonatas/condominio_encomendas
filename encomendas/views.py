@@ -69,6 +69,11 @@ def entregar_encomenda(request, pk):
             encomenda.data_retirada = timezone.now()
             encomenda.retirado = True
 
+            # Apaga o QR Code ao entregar
+            if encomenda.qr_code:
+                encomenda.qr_code.delete(save=False)  # apaga o arquivo do disco
+                encomenda.qr_code = None              # limpa o campo no banco
+
             assinatura_base64 = form.cleaned_data.get("assinatura_base64", "")
             # print("Assinatura Base64 recebida:", assinatura_base64)
 

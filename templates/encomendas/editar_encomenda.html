@@ -76,13 +76,12 @@
     </form>
 
 </div>
-
 <script>
 // AJAX para atualizar apartamentos quando o bloco mudar
 document.getElementById("bloco").addEventListener("change", function() {
     const blocoId = this.value;
 
-    fetch(`/encomendas/get-apartamentos/${blocoId}/`)
+    fetch("{% url 'get_apartamentos' 0 %}".replace("0", blocoId))
         .then(r => r.json())
         .then(data => {
             const select = document.getElementById("apartamento");
@@ -97,7 +96,7 @@ document.getElementById("bloco").addEventListener("change", function() {
 document.getElementById("apartamento").addEventListener("change", function() {
     const aptoId = this.value;
 
-    fetch(`/encomendas/get-moradores/${aptoId}/`)
+    fetch("{% url 'get_moradores' 0 %}".replace("0", aptoId))
         .then(r => r.json())
         .then(data => {
             const select = document.getElementById("morador");
@@ -108,5 +107,6 @@ document.getElementById("apartamento").addEventListener("change", function() {
         });
 });
 </script>
+
 
 {% endblock %}
