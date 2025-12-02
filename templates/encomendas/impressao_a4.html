@@ -19,8 +19,6 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6mm;
-
-            /* evita quebra entre linhas de etiquetas */
             page-break-inside: avoid;
             break-inside: avoid;
         }
@@ -33,8 +31,6 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-
-            /* AQUI ESTÁ A MAGIA */
             page-break-inside: avoid !important;
             break-inside: avoid !important;
         }
@@ -119,6 +115,7 @@
             margin-top: auto;
             line-height: 1.2;
         }
+
     </style>
 </head>
 <body>
@@ -132,6 +129,7 @@
         <div class="corpo">
 
             <div class="col-esq">
+
                 <div class="linha-dupla">
                     <div class="numero">#{{ e.sequencial_do_dia }}</div>
                     <div class="recebido-info">
@@ -141,20 +139,27 @@
                 </div>
 
                 {% if e.morador %}
-                <div class="linha texto-truncado"><strong>Nome:</strong> {{ e.morador.nome }}</div>
+                <div class="linha texto-truncado">
+                    <strong>Nome:</strong> {{ e.morador.nome }}
+                </div>
                 {% endif %}
 
-                {% if e.descricao %}
-                <div class="linha texto-truncado"><strong>Desc:</strong> {{ e.descricao }}</div>
-                {% endif %}
+                <div class="linha texto-truncado">
+                    <strong>Desc:</strong>
+                    {{ e.descricao|slice:":25" }}{% if e.descricao|length > 25 %}...{% endif %}
+                </div>
 
                 {% if e.identificador_pacote %}
-                <div class="linha texto-truncado"><strong>ID:</strong> {{ e.identificador_pacote }}</div>
+                <div class="linha texto-truncado">
+                    <strong>ID:</strong>
+                    {{ e.identificador_pacote|slice:":25" }}{% if e.identificador_pacote|length > 25 %}...{% endif %}
+                </div>
                 {% endif %}
 
                 <div class="mensagem">
                     Apresente o aviso recebido para retirada da encomenda na administração.
                 </div>
+
             </div>
 
             <div class="col-dir">
@@ -162,7 +167,7 @@
                     BL - {{ e.apartamento.bloco.nome }}<br>
                     AP - {{ e.apartamento.numero }}
                 </div>
-                <img src="{{ e.qr_code.url }}"" class="qr">
+                <img src="{{ e.qr_code.url }}" class="qr">
             </div>
 
         </div>
@@ -172,7 +177,7 @@
 </div>
 
 <script>
-    window.print();
+window.print();
 </script>
 
 </body>
