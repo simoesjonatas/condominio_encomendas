@@ -110,9 +110,9 @@
                 <i class="bi bi-box-arrow-down"></i> Registrar Entrega
             </a>
 
-            <a href="{% url 'etiqueta_encomenda' e.pk %}" target="_blank" class="btn btn-secondary w-100">
+            {% comment %} <a href="{% url 'etiqueta_encomenda' e.pk %}" target="_blank" class="btn btn-secondary w-100">
                 <i class="bi bi-printer"></i> Imprimir Etiqueta
-            </a>
+            </a> {% endcomment %}
             <a href="{% url 'editar_encomenda' e.pk %}" class="btn btn-primary w-100">
                 <i class="bi bi-pencil-square"></i> Editar Encomenda
             </a>

@@ -9,7 +9,7 @@
 </h3>
 
 <div class="d-flex justify-content-end mb-3">
-    <a href="{% url 'selecao_impressao' %}" class="btn btn-warning">
+    <a href="{% url 'selecao_impressao' %}" class="btn btn-warning me-2">
         <i class="bi bi-printer-fill"></i> Impressão em Massa
     </a>
     <a href="{% url 'nova_encomenda' %}" class="btn btn-primary">
@@ -17,14 +17,14 @@
     </a>
 </div>
 
-
 <form method="get" class="card p-3 mb-4 shadow-sm">
 
     <div class="row g-3">
 
+        <!-- FILTRO DE BLOCO -->
         <div class="col-md-3">
             <label class="form-label">Bloco</label>
-            <select name="bloco" class="form-select">
+            <select name="bloco" id="bloco-select" class="form-select">
                 <option value="">Todos</option>
                 {% for b in blocos %}
                     <option value="{{ b.id }}" {% if f_bloco == b.id|stringformat:'s' %}selected{% endif %}>
@@ -34,23 +34,30 @@
             </select>
         </div>
 
+        <!-- FILTRO DE APARTAMENTO (subfiltro do bloco) -->
         <div class="col-md-3">
             <label class="form-label">Apartamento</label>
-            <select name="apto" class="form-select">
+            <select name="apto" id="apto-select" class="form-select">
                 <option value="">Todos</option>
-                {% for a in apartamentos %}
-                    <option value="{{ a.id }}" {% if f_apto == a.id|stringformat:'s' %}selected{% endif %}>
-                        {{ a.bloco.nome }} - {{ a.numero }}
-                    </option>
-                {% endfor %}
+
+                {# Se não tiver bloco filtrado, mostra todos #}
+                {% if not f_bloco %}
+                    {% for a in apartamentos %}
+                        <option value="{{ a.id }}" {% if f_apto == a.id|stringformat:'s' %}selected{% endif %}>
+                            {{ a.bloco.nome }} - {{ a.numero }}
+                        </option>
+                    {% endfor %}
+                {% endif %}
             </select>
         </div>
 
+        <!-- DATA -->
         <div class="col-md-3">
             <label class="form-label">Data de Recebimento</label>
             <input type="date" name="data" class="form-control" value="{{ f_data }}">
         </div>
 
+        <!-- BUSCA -->
         <div class="col-md-3">
             <label class="form-label">Buscar</label>
             <input
@@ -64,23 +71,26 @@
 
     </div>
 
-    <div class="d-flex justify-content-between mt-3">
+    <div class="d-flex justify-content-between align-items-center mt-3">
+
+    <a href="{% url 'ler_qrcode' %}" class="btn btn-dark">
+        <i class="bi bi-qr-code-scan"></i> Ler QR Code
+    </a>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'lista_encomendas' %}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Limpar Filtros
+        </a>
+
         <button class="btn btn-primary">
             <i class="bi bi-search"></i> Filtrar
         </button>
-
-        
-
-        {% if encomendas %}
-        <a href="{% url 'imprimir_encomendas' %}?{{ request.GET.urlencode }}"
-           class="btn btn-success">
-            <i class="bi bi-printer"></i> Imprimir Etiquetas
-        </a>
-        {% endif %}
     </div>
 
-</form>
+</div>
 
+
+</form>
 
 {% if encomendas %}
 
@@ -116,7 +126,6 @@
                     <a href="{% url 'detalhes_encomenda' e.pk %}" class="btn btn-outline-primary btn-sm w-100">
                         <i class="bi bi-search"></i> Detalhes
                     </a>
-
                 </div>
 
             </div>
@@ -131,5 +140,49 @@
     </div>
 
 {% endif %}
+
+<!-- JAVASCRIPT DO SUBFILTRO -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const blocoSelect = document.getElementById("bloco-select");
+    const aptoSelect  = document.getElementById("apto-select");
+
+    // URL template da sua rota
+    const urlTemplate = "{% url 'ajax_apartamentos_bloco' 99999 %}";
+
+    function carregarApartamentos(blocoId, aptoSelecionado = null) {
+
+        aptoSelect.innerHTML = '<option value="">Todos</option>';
+
+        if (!blocoId) return;
+
+        const url = urlTemplate.replace("99999", blocoId);
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(a => {
+                    const opt = document.createElement("option");
+                    opt.value = a.id;
+                    opt.textContent = a.numero;
+                    if (aptoSelecionado && aptoSelecionado == a.id) {
+                        opt.selected = true;
+                    }
+                    aptoSelect.appendChild(opt);
+                });
+            });
+    }
+
+    // Atualiza quando o bloco for alterado
+    blocoSelect.addEventListener("change", function () {
+        carregarApartamentos(this.value);
+    });
+
+    // Se a página já veio filtrada, recarrega os apartamentos do bloco selecionado
+    {% if f_bloco %}
+        carregarApartamentos("{{ f_bloco }}", "{{ f_apto }}");
+    {% endif %}
+});
+</script>
 
 {% endblock %}

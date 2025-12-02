@@ -11,20 +11,28 @@
 <!-- Form de Busca -->
 <form method="get" class="mb-4">
     <div class="input-group">
+
         <input type="text"
                name="q"
                value="{{ termo }}"
                class="form-control"
-               placeholder="Ex: João, 101, Bloco A, #5, caixa grande…">
+               placeholder="Busque por nome, bloco/apto (ex: 25/201), número do apto, descrição, ou #sequencial…">
+
         <button class="btn btn-primary">
             <i class="bi bi-search"></i>
         </button>
+
+        {% if termo %}
+        <a href="{% url 'buscar_encomendas' %}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i>
+        </a>
+        {% endif %}
     </div>
 </form>
+
 <a href="{% url 'ler_qrcode' %}" class="btn btn-dark w-100 mb-3">
     <i class="bi bi-qr-code-scan"></i> Ler QR Code
 </a>
-
 
 {% if termo and resultados %}
     <p class="text-muted small mb-3">
@@ -47,23 +55,26 @@
 
             <div class="mt-1">
                 <small class="text-muted">
-                    Morador:
-                    {% if e.morador %}
-                        {{ e.morador.nome }}
+                    Identificação do Pacote:
+                    {% if e.identificador_pacote %}
+                        <strong>{{ e.identificador_pacote }}</strong>
                     {% else %}
                         —
                     {% endif %}
                 </small>
                 <br>
+
                 <small class="text-muted">
                     Recebido em {{ e.data_recebimento }}
                 </small>
+
                 {% if e.descricao %}
                     <br>
                     <small class="text-muted">
                         Pacote: {{ e.descricao }}
                     </small>
                 {% endif %}
+
             </div>
 
             <div class="mt-3 d-flex gap-2">
@@ -71,7 +82,6 @@
                 <a href="{% url 'entregar_encomenda' e.pk %}" class="btn btn-success w-100">
                     <i class="bi bi-pencil"></i> Registrar Entrega
                 </a>
-
 
                 <a href="{% url 'detalhes_encomenda' e.pk %}" class="btn btn-outline-primary btn-sm w-100">
                     <i class="bi bi-search"></i> Detalhes

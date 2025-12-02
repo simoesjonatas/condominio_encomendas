@@ -31,10 +31,18 @@ def processar_qrcode_view(request):
     # Exemplo de QR: BLOCO-A-101-11
     match = re.search(r"(\d+)$", codigo)
 
+    encomenda = None
+
     if match:
         encomenda_id = match.group(1)
-        return redirect("detalhes_encomenda", pk=encomenda_id)
 
+        # confere se existe antes de redirecionar
+        encomenda = Encomenda.objects.filter(pk=encomenda_id).first()
+
+    if encomenda:
+        return redirect("detalhes_encomenda", pk=encomenda.pk)
+
+    # Se não tiver match ou não existir encomenda com esse ID
     return render(request, "encomendas/qr_invalido.html", {"codigo": codigo})
 
 
@@ -245,26 +253,67 @@ def buscar_moradores(request):
 
 
 
+import re
+from django.db.models import Q
+
 def buscar_encomendas(request):
     termo = request.GET.get("q", "").strip()
 
     resultados = []
 
     if termo:
-        resultados = Encomenda.objects.filter(
-            retirado=False
-        ).filter(
-            Q(morador__nome__icontains=termo) |
-            Q(apartamento__numero__icontains=termo) |
-            Q(apartamento__bloco__nome__icontains=termo) |
-            Q(descricao__icontains=termo) |
-            Q(sequencial_do_dia__icontains=termo)
-        ).select_related("apartamento", "morador", "apartamento__bloco")
+
+        # --------------------------------------------------------------
+        # 1) BUSCAR POR SEQUENCIAL (#123)
+        # --------------------------------------------------------------
+        if termo.startswith("#"):
+            num = termo[1:]  # remove a cerquilha
+
+            if num.isdigit():  # só aceita números
+                resultados = Encomenda.objects.filter(
+                    retirado=False,
+                    sequencial_do_dia=num
+                ).select_related("apartamento", "morador", "apartamento__bloco")
+
+                return render(request, "encomendas/busca.html", {
+                    "termo": termo,
+                    "resultados": resultados
+                })
+
+        # --------------------------------------------------------------
+        # 2) BUSCAR POR BLOCO/APTO (ex: 25/201)
+        # --------------------------------------------------------------
+        match = re.match(r"^(\w+)[\s]*/[\s]*(\w+)$", termo)
+        if match:
+            bloco_val = match.group(1)
+            apto_val = match.group(2)
+
+            resultados = Encomenda.objects.filter(
+                retirado=False,
+                apartamento__bloco__nome__icontains=bloco_val,
+                apartamento__numero__icontains=apto_val
+            ).select_related("apartamento", "morador", "apartamento__bloco")
+
+        else:
+            # ----------------------------------------------------------
+            # 3) BUSCA NORMAL
+            # ----------------------------------------------------------
+            resultados = Encomenda.objects.filter(
+                retirado=False
+            ).filter(
+                Q(morador__nome__icontains=termo) |
+                Q(apartamento__numero__icontains=termo) |
+                Q(apartamento__bloco__nome__icontains=termo) |
+                Q(descricao__icontains=termo) |
+                Q(identificador_pacote__icontains=termo) |
+                Q(sequencial_do_dia__icontains=termo)
+            ).select_related("apartamento", "morador", "apartamento__bloco")
 
     return render(request, "encomendas/busca.html", {
         "termo": termo,
         "resultados": resultados
     })
+
 
 def detalhes_encomenda(request, pk):
     encomenda = get_object_or_404(
