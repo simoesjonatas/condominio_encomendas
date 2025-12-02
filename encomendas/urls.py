@@ -3,7 +3,7 @@ from .views import  (
     nova_encomenda, lista_encomendas, buscar_encomendas, detalhes_encomenda, entregar_encomenda, etiqueta_encomenda,
     historico_entregas, dashboard_view, imprimir_etiquetas_lote, confirmar_entrega_view,
     ler_qrcode_view, processar_qrcode_view, ler_identificador_view,
-    selecao_impressao, imprimir_encomendas,
+    selecao_impressao, imprimir_encomendas, editar_encomenda
     )
 
 urlpatterns = [
@@ -11,6 +11,8 @@ urlpatterns = [
     path('nova/', nova_encomenda, name='nova_encomenda'),
     path('buscar/', buscar_encomendas, name='buscar_encomendas'),
     path('<int:pk>/detalhes/', detalhes_encomenda, name='detalhes_encomenda'),
+    path('<int:pk>/editar/', editar_encomenda, name='editar_encomenda'),
+
 
     path('<int:pk>/entregar/', entregar_encomenda, name='entregar_encomenda'),
     path('<int:pk>/etiqueta/', etiqueta_encomenda, name='etiqueta_encomenda'),

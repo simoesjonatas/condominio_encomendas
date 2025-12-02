@@ -29,14 +29,28 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             page-break-inside: avoid;
+            overflow: hidden;
         }
 
         .topo {
             font-size: 11pt;
             font-weight: bold;
             text-align: center;
+            margin-bottom: 2mm;
+        }
+
+        .corpo {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            gap: 3mm;
+        }
+
+        .col-esq {
+            flex: 1;
+            font-size: 9pt;
+            line-height: 1.1;
         }
 
         .linha {
@@ -50,17 +64,37 @@
             text-overflow: ellipsis;
         }
 
-        .numero-area {
+        .col-dir {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
+            gap: 3mm;
+        }
+
+        .bl-ap {
+            font-size: 9pt;
+            text-align: center;
+        }
+
+        .numero-linha {
+            display: flex;
+            align-items: flex-start;
+            gap: 3mm;
+            margin-bottom: 3mm;
         }
 
         .numero {
-            font-size: 16pt;
+            font-size: 17pt;
             font-weight: bold;
             border: 1px dashed #000;
             padding: 2mm 6mm;
+            display: inline-block;
+        }
+
+        .recebido-info {
+            font-size: 7pt;
+            line-height: 1.2;
+            margin-top: 1mm;
         }
 
         .qr {
@@ -68,9 +102,12 @@
             height: 22mm;
         }
 
-        .info-menor {
-            font-size: 7pt;
-            text-align: center;
+        /* Mensagem logo abaixo de ID, maior para leitura */
+        .mensagem {
+            font-size: 8.5pt;
+            font-weight: bold;
+            margin-top: 2mm;
+            line-height: 1.2;
         }
     </style>
 </head>
@@ -79,34 +116,54 @@
 <div class="folha">
 {% for e in lista %}
     <div class="etiqueta">
-        <div>
-            <div class="topo">ENTREGA</div>
+        <div class="topo">CRPNI Condominio</div>
 
-            <div class="linha">
-                <strong>BL:</strong> {{ e.apartamento.bloco.nome }} |
-                <strong>AP:</strong> {{ e.apartamento.numero }}
+        <div class="corpo">
+
+            <!-- COLUNA ESQUERDA: #, recebido, Nome, Desc, ID, Mensagem -->
+            <div class="col-esq">
+
+                <div class="numero-linha">
+                    <div class="numero">#{{ e.sequencial_do_dia }}</div>
+                    <div class="recebido-info">
+                        Recebido: {{ e.data_recebimento }}<br>
+                        Por: {{ e.recebido_por }}
+                    </div>
+                </div>
+
+                {% if e.morador %}
+                <div class="linha texto-truncado">
+                    <strong>Nome:</strong> {{ e.morador.nome }}
+                </div>
+                {% endif %}
+
+                {% if e.descricao %}
+                <div class="linha texto-truncado">
+                    <strong>Desc:</strong> {{ e.descricao }}
+                </div>
+                {% endif %}
+
+                {% if e.identificador_pacote %}
+                <div class="linha texto-truncado">
+                    <strong>ID:</strong> {{ e.identificador_pacote }}
+                </div>
+                {% endif %}
+
+                <div class="mensagem">
+                    Apresente o aviso recebido para retirada da encomenda na administração.
+                </div>
             </div>
 
-            {% if e.morador %}
-            <div class="linha texto-truncado"><strong>Nome:</strong> {{ e.morador.nome }}</div>
-            {% endif %}
+            <!-- COLUNA DIREITA: BL/AP + QR -->
+            <div class="col-dir">
+                <div class="bl-ap">
+                    <strong>BL:</strong> {{ e.apartamento.bloco.nome }}<br>
+                    <strong>AP:</strong> {{ e.apartamento.numero }}
+                </div>
 
-            {% if e.descricao %}
-            <div class="linha texto-truncado"><strong>Desc:</strong> {{ e.descricao }}</div>
-            {% endif %}
+                <img src="{{ e.qr_code.url }}" class="qr">
+            </div>
 
-            {% if e.identificador_pacote %}
-            <div class="linha texto-truncado"><strong>ID:</strong> {{ e.identificador_pacote }}</div>
-            {% endif %}
-        </div>
-
-        <div class="numero-area">
-            <div class="numero">#{{ e.sequencial_do_dia }}</div>
-            <img src="{{ e.qr_code.url }}" class="qr">
-        </div>
-
-        <div class="info-menor">
-            Recebido: {{ e.data_recebimento }} | Por: {{ e.recebido_por }}
         </div>
     </div>
 {% endfor %}

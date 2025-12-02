@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Encomenda{% endblock %}
+
+{% block content %}
+<div class="card p-4 shadow-sm">
+
+    <h3 class="mb-3">
+        <i class="bi bi-pencil-square"></i> Editar Encomenda #{{ e.sequencial_do_dia }}
+    </h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Bloco -->
+        <div class="mb-3">
+            <label class="form-label">Bloco</label>
+            <select id="bloco" name="bloco" class="form-select">
+                <option value="">Selecione...</option>
+                {% for b in blocos %}
+                    <option value="{{ b.id }}" 
+                        {% if b.id == selected_bloco %}selected{% endif %}>
+                        {{ b.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Apartamento -->
+        <div class="mb-3">
+            <label class="form-label">Apartamento</label>
+            <select id="apartamento" name="apartamento" class="form-select">
+                {% if selected_apto %}
+                    <option value="{{ selected_apto }}" selected>
+                        {{ e.apartamento.numero }}
+                    </option>
+                {% endif %}
+            </select>
+        </div>
+
+        <!-- Morador -->
+        <div class="mb-3">
+            <label class="form-label">Morador</label>
+            <select id="morador" name="morador" class="form-select">
+                {% if selected_morador %}
+                    <option value="{{ selected_morador }}" selected>
+                        {{ e.morador.nome }}
+                    </option>
+                {% endif %}
+            </select>
+        </div>
+
+        <!-- Campos do form -->
+        <div class="mb-3">
+            {{ form.descricao.label_tag }}
+            {{ form.descricao }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.local_armazenado.label_tag }}
+            {{ form.local_armazenado }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.identificador_pacote.label_tag }}
+            {{ form.identificador_pacote }}
+        </div>
+
+        <button class="btn btn-success w-100">
+            <i class="bi bi-check-circle"></i> Salvar Alterações
+        </button>
+
+        <a href="{% url 'detalhes_encomenda' e.pk %}" class="btn btn-outline-dark w-100 mt-2">
+            <i class="bi bi-arrow-left"></i> Cancelar
+        </a>
+    </form>
+
+</div>
+
+<script>
+// AJAX para atualizar apartamentos quando o bloco mudar
+document.getElementById("bloco").addEventListener("change", function() {
+    const blocoId = this.value;
+
+    fetch(`/encomendas/get-apartamentos/${blocoId}/`)
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById("apartamento");
+            select.innerHTML = "";
+            data.forEach(ap => {
+                select.innerHTML += `<option value="${ap.id}">${ap.numero}</option>`;
+            });
+        });
+});
+
+// AJAX para moradores quando o apartamento mudar
+document.getElementById("apartamento").addEventListener("change", function() {
+    const aptoId = this.value;
+
+    fetch(`/encomendas/get-moradores/${aptoId}/`)
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById("morador");
+            select.innerHTML = "";
+            data.forEach(m => {
+                select.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
+            });
+        });
+});
+</script>
+
+{% endblock %}

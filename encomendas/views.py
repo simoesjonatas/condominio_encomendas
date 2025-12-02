@@ -358,6 +358,42 @@ def processar_identificador_view(request):
 
     return redirect(f"/encomendas/nova/?{params}")
 
+def editar_encomenda(request, pk):
+    encomenda = get_object_or_404(Encomenda, pk=pk)
+
+    if request.method == "POST":
+        form = EncomendaForm(request.POST, instance=encomenda)
+
+        if form.is_valid():
+            obj = form.save(commit=False)
+
+            # força relacionamento correto
+            obj.apartamento_id = request.POST.get("apartamento")
+            obj.morador_id = request.POST.get("morador")
+
+            obj.save()
+            messages.success(request, "Encomenda atualizada com sucesso!")
+            return redirect("detalhes_encomenda", pk=pk)
+
+    else:
+        form = EncomendaForm(instance=encomenda)
+
+    # Pré-povoar selects (bloco, apto, morador)
+    blocos = Bloco.objects.all()
+    selected_bloco = encomenda.apartamento.bloco.id
+    selected_apto = encomenda.apartamento.id
+    selected_morador = encomenda.morador.id if encomenda.morador else ""
+
+    return render(request, "encomendas/editar_encomenda.html", {
+        "form": form,
+        "e": encomenda,
+        "blocos": blocos,
+        "selected_bloco": selected_bloco,
+        "selected_apto": selected_apto,
+        "selected_morador": selected_morador,
+    })
+
+
 
 
 def lista_encomendas(request):

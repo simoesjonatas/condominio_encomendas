@@ -41,6 +41,11 @@
         </div>
     {% endif %}
 
+    <!-- Identificador pacote: -->
+    <div class="mb-3">
+        <strong>Identificador pacote::</strong> {{ e.identificador_pacote }}
+    </div>
+
     <!-- Local -->
     <div class="mb-3">
         <strong>Local armazenado:</strong> {{ e.get_local_armazenado_display }}
@@ -108,10 +113,15 @@
             <a href="{% url 'etiqueta_encomenda' e.pk %}" target="_blank" class="btn btn-secondary w-100">
                 <i class="bi bi-printer"></i> Imprimir Etiqueta
             </a>
+            <a href="{% url 'editar_encomenda' e.pk %}" class="btn btn-primary w-100">
+                <i class="bi bi-pencil-square"></i> Editar Encomenda
+            </a>
+
         {% endif %}
 
 
-        <a href="javascript:history.back()" class="btn btn-outline-dark w-100">
+        <a href="{% url 'lista_encomendas' %}" class="btn btn-outline-dark w-100"> 
+            {% comment %} href="javascript:history.back() {% endcomment %}
             <i class="bi bi-arrow-left"></i> Voltar
         </a>
 
