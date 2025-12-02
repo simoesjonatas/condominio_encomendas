@@ -3,138 +3,108 @@
 
 {% block content %}
 
-<h1 style="margin-bottom:20px;">📦 Impressão de Encomendas</h1>
+<h3 class="mb-4">
+    <i class="bi bi-printer"></i> Impressão de Encomendas
+</h3>
 
-<style>
-    .filtros-box {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-        padding: 16px;
-        background: #fff;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        margin-bottom: 20px;
-    }
+<!-- FILTROS -->
+<form method="get" class="card p-3 mb-4 shadow-sm">
 
-    .filtros-box label {
-        font-weight: bold;
-        margin-bottom: 4px;
-        display: block;
-    }
+    <div class="row g-3">
 
-    .filtros-box input,
-    .filtros-box select {
-        padding: 6px 10px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-    }
+        <div class="col-md-3">
+            <label class="form-label">Data</label>
+            <input type="date" name="data" value="{{ data }}" class="form-control">
+        </div>
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-    }
+        <div class="col-md-3">
+            <label class="form-label">Bloco</label>
+            <select name="bloco" class="form-select">
+                <option value="">Todos</option>
+                {% for b in blocos %}
+                    <option value="{{ b.id }}" {% if bloco_selecionado == b.id|stringformat:'s' %}selected{% endif %}>
+                        {{ b.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-    th, td {
-        padding: 12px 10px;
-        border-bottom: 1px solid #eee;
-    }
+        <div class="col-md-6 d-flex justify-content-end align-items-end gap-2">
+            <a href="{% url 'selecao_impressao' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Limpar filtros
+            </a>
 
-    th {
-        background: #f8f8f8;
-        font-weight: bold;
-    }
+            <button class="btn btn-primary">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+        </div>
 
-    tr:hover {
-        background: #fafafa;
-    }
-
-    .btn-select-all {
-        margin-bottom: 12px;
-    }
-</style>
-
-<form method="get" class="filtros-box">
-
-    <div>
-        <label>Data:</label>
-        <input type="date" name="data" value="{{ data }}">
     </div>
 
-    <div>
-        <label>Bloco:</label>
-        <select name="bloco">
-            <option value="">Todos</option>
-            {% for b in blocos %}
-                <option value="{{ b.id }}" {% if bloco_selecionado == b.id|stringformat:'s' %}selected{% endif %}>
-                    {{ b.nome }}
-                </option>
-            {% endfor %}
-        </select>
-    </div>
-
-    {% comment %} <div style="display:flex; align-items:center; gap:6px; margin-top:22px;">
-        <input type="checkbox" name="pendentes" {% if pendentes %}checked{% endif %}>
-        <label style="margin:0;">Somente pendentes</label>
-    </div> {% endcomment %}
-
-    <button class="btn primary" style="height:40px; margin-top:22px;">Filtrar</button>
 </form>
 
-
+<!-- LISTAGEM -->
 <form method="post" action="{% url 'imprimir_encomendas' %}">
     {% csrf_token %}
 
-    <button type="button" class="btn btn-select-all" onclick="toggleSelectAll()">
-        Selecionar Todos
-    </button>
-
-    <table>
-        <thead>
-            <tr>
-                <th style="width:40px;"></th>
-                <th>Seq</th>
-                <th>Bloco</th>
-                <th>Apto</th>
-                <th>Morador</th>
-                <th>Data</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for e in encomendas %}
-            <tr>
-                <td><input type="checkbox" class="chk" name="ids" value="{{ e.id }}"></td>
-                <td>#{{ e.sequencial_do_dia }}</td>
-                <td>{{ e.apartamento.bloco.nome }}</td>
-                <td>{{ e.apartamento.numero }}</td>
-                <td>{{ e.morador.nome }}</td>
-                <td>{{ e.data_recebimento }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div style="margin-top:20px; padding:12px; background:#fff; border-radius:8px; border:1px solid #ddd;">
-        <h4 style="margin-bottom:10px;">Tipo de impressão</h4>
-
-        <label style="display:block; margin-bottom:6px;">
-            <input type="radio" name="tipo" value="a4" checked>
-            📄 Impressora normal (A4)
-        </label>
-
-        <label style="display:block;">
-            <input type="radio" name="tipo" value="termica">
-            🧾 Impressora térmica 80mm
-        </label>
+    <div class="d-flex justify-content-between mb-2">
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleSelectAll()">
+            Selecionar Todos
+        </button>
     </div>
 
-    <button class="btn success" style="margin-top:20px;">
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:40px;"></th>
+                        <th>Seq</th>
+                        <th>Bloco</th>
+                        <th>Apto</th>
+                        {% comment %} <th>Morador</th> {% endcomment %}
+                        <th>Data</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for e in encomendas %}
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input chk" name="ids" value="{{ e.id }}"></td>
+                        <td>#{{ e.sequencial_do_dia }}</td>
+                        <td>{{ e.apartamento.bloco.nome }}</td>
+                        <td>{{ e.apartamento.numero }}</td>
+                        {% comment %} <td>{{ e.morador.nome }}</td> {% endcomment %}
+                        <td>{{ e.data_recebimento }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card p-3 mt-3 shadow-sm">
+        <h5 class="mb-3">Tipo de impressão</h5>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="tipo" id="tipoA4" value="a4" checked>
+            <label class="form-check-label" for="tipoA4">
+                📄 Impressora normal (A4)
+            </label>
+        </div>
+
+        <div class="form-check mt-1">
+            <input class="form-check-input" type="radio" name="tipo" id="tipoTermica" value="termica">
+            <label class="form-check-label" for="tipoTermica">
+                🧾 Impressora térmica 80mm
+            </label>
+        </div>
+    </div>
+
+    <button class="btn btn-success w-100 mt-3">
         🖨 Imprimir Selecionadas
     </button>
+
 </form>
 
 <script>
@@ -142,11 +112,9 @@
 
     function toggleSelectAll() {
         selected = !selected;
-        const checks = document.querySelectorAll('.chk');
+        document.querySelectorAll('.chk').forEach(ch => ch.checked = selected);
 
-        checks.forEach(ch => ch.checked = selected);
-
-        const btn = document.querySelector('.btn-select-all');
+        const btn = document.querySelector('.btn-outline-primary');
         btn.innerHTML = selected ? "Desmarcar Todos" : "Selecionar Todos";
     }
 </script>
