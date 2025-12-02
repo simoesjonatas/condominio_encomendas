@@ -439,29 +439,43 @@ def selecao_impressao(request):
     })
 
 def imprimir_encomendas(request):
-    encomendas = Encomenda.objects.filter(retirado=False)
+    if request.method == "POST":
+        ids = request.POST.getlist("ids")
+        tipo = request.POST.get("tipo", "a4")
+        # filtros da URL
+        bloco = request.GET.get("bloco", "")
+        apto = request.GET.get("apto", "")
+        data = request.GET.get("data", "")
+        busca = request.GET.get("busca", "")
 
-    # filtros da URL
-    bloco = request.GET.get("bloco", "")
-    apto = request.GET.get("apto", "")
-    data = request.GET.get("data", "")
-    busca = request.GET.get("busca", "")
+        # Busca apenas as encomendas selecionadas
+        encomendas = Encomenda.objects.filter(id__in=ids)
 
-    if bloco:
-        encomendas = encomendas.filter(apartamento__bloco__id=bloco)
 
-    if apto:
-        encomendas = encomendas.filter(apartamento__id=apto)
+        if bloco:
+            encomendas = encomendas.filter(apartamento__bloco__id=bloco)
 
-    if data:
-        encomendas = encomendas.filter(data_recebimento=data)
+        if apto:
+            encomendas = encomendas.filter(apartamento__id=apto)
 
-    if busca:
-        encomendas = encomendas.filter(
-            Q(morador__nome__icontains=busca) |
-            Q(descricao__icontains=busca)
-        )
+        if data:
+            encomendas = encomendas.filter(data_recebimento=data)
 
-    return render(request, "encomendas/impressao_massa.html", {
-        "lista": encomendas
-    })
+        if busca:
+            encomendas = encomendas.filter(
+                Q(morador__nome__icontains=busca) |
+                Q(descricao__icontains=busca)
+            )
+
+        # Escolhe o template conforme o tipo
+        if tipo == "termica":
+            template_name = "encomendas/impressao_termica.html"
+        else:
+            template_name = "encomendas/impressao_a4.html"
+
+        return render(request, template_name, {
+            "lista": encomendas
+        })
+
+    # Acesso inválido
+    return redirect("selecao_impressao")
