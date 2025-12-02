@@ -133,6 +133,52 @@
 
     </div>
 
+    <!-- PAGINAÇÃO -->
+{% if page_obj %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page_obj.previous_page_number }}
+                        &bloco={{ f_bloco|default_if_none:'' }}
+                        &apto={{ f_apto|default_if_none:'' }}
+                        &data={{ f_data|default_if_none:'' }}
+                        &busca={{ f_busca|default_if_none:'' }}">
+                    « Anterior
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">« Anterior</span></li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page_obj.next_page_number }}
+                       &bloco={{ f_bloco|default_if_none:'' }}
+                        &apto={{ f_apto|default_if_none:'' }}
+                        &data={{ f_data|default_if_none:'' }}
+                        &busca={{ f_busca|default_if_none:'' }}">
+                    Próxima »
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Próxima »</span></li>
+        {% endif %}
+
+    </ul>
+</nav>
+{% endif %}
+
+
 {% else %}
 
     <div class="alert alert-info">

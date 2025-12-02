@@ -3,19 +3,34 @@ from .models import Bloco, Apartamento, Morador
 from .forms import BlocoForm, ApartamentoForm, MoradorForm
 from django.db.models import Q
 from django.http import JsonResponse
+from django.core.paginator import Paginator
 
 
 # Listar blocos
 def lista_blocos(request):
-    termo = request.GET.get("q", "")  # pega ?q=...
-    
+    termo = request.GET.get("q", "").strip() or None
+    page_number = request.GET.get("page", 1)
+
+    blocos = Bloco.objects.all()
+
     if termo:
-        blocos = Bloco.objects.filter(nome__icontains=termo)
-    else:
-        blocos = Bloco.objects.all()
+        blocos = blocos.filter(nome__icontains=termo)
+
+    blocos = blocos.order_by("nome")
+
+    # PAGINADOR
+    paginator = Paginator(blocos, 10)
+    page_obj = paginator.get_page(page_number)
+
+    # Criar querystring sem o "page"
+    params = request.GET.copy()
+    params.pop("page", None)
+    querystring = params.urlencode()
 
     return render(request, "morador/lista_blocos.html", {
-        "blocos": blocos,
+        "blocos": page_obj,       # mantém compatível com o template
+        "page_obj": page_obj,
+        "querystring": querystring,
         "termo": termo,
     })
 
@@ -36,25 +51,37 @@ def novo_bloco(request):
 
 # Listar apartamentos
 def lista_apartamentos(request):
-    bloco_id = request.GET.get("bloco", "")
-    numero = request.GET.get("numero", "")
+    bloco_id = request.GET.get("bloco", "").strip() or None
+    numero   = request.GET.get("numero", "").strip() or None
+    page_number = request.GET.get("page", 1)
 
-    apartamentos = Apartamento.objects.select_related("bloco").all()
+    apartamentos = Apartamento.objects.select_related("bloco")
 
     if bloco_id:
         apartamentos = apartamentos.filter(bloco_id=bloco_id)
-
     if numero:
         apartamentos = apartamentos.filter(numero__icontains=numero)
+
+    apartamentos = apartamentos.order_by("bloco__nome", "numero")
+
+    paginator = Paginator(apartamentos, 15)
+    page_obj = paginator.get_page(page_number)
+
+    params = request.GET.copy()
+    params.pop('page', None)
+    querystring = params.urlencode()
 
     blocos = Bloco.objects.all().order_by("id")
 
     return render(request, "morador/lista_apartamentos.html", {
-        "apartamentos": apartamentos,
+        "apartamentos": page_obj,
+        "page_obj": page_obj,
+        "querystring": querystring,
         "blocos": blocos,
         "bloco_id": bloco_id,
         "numero": numero,
     })
+
 
 
 # Criar apartamento
@@ -74,12 +101,15 @@ def novo_apartamento(request):
 
 # Listar moradores
 def lista_moradores(request):
-    nome = request.GET.get("nome", "")
-    bloco_id = request.GET.get("bloco", "")
-    apartamento_id = request.GET.get("apartamento", "")
+    # --- PEGANDO E LIMANDO OS FILTROS ---
+    nome = request.GET.get("nome", "").strip() or None
+    bloco_id = request.GET.get("bloco", "").strip() or None
+    apartamento_id = request.GET.get("apartamento", "").strip() or None
+    page_number = request.GET.get("page", 1)
 
-    moradores = Morador.objects.all().prefetch_related("apartamentos")
+    moradores = Morador.objects.prefetch_related("apartamentos").all()
 
+    # --- APLICANDO FILTROS ---
     if nome:
         moradores = moradores.filter(nome__icontains=nome)
 
@@ -89,11 +119,25 @@ def lista_moradores(request):
     if apartamento_id:
         moradores = moradores.filter(apartamentos__id=apartamento_id).distinct()
 
+    moradores = moradores.order_by("nome")
+
+    # --- PAGINAÇÃO ---
+    paginator = Paginator(moradores, 15)
+    page_obj = paginator.get_page(page_number)
+
+    # --- QUERYSTRING (para preservar filtros) ---
+    params = request.GET.copy()
+    params.pop("page", None)
+    querystring = params.urlencode()
+
+    # --- DADOS PARA OS SELECTS ---
     blocos = Bloco.objects.all().order_by("id")
     apartamentos = Apartamento.objects.all().order_by("numero")
 
     return render(request, "morador/lista_moradores.html", {
-        "moradores": moradores,
+        "moradores": page_obj,
+        "page_obj": page_obj,
+        "querystring": querystring,
         "nome": nome,
         "bloco_id": bloco_id,
         "apartamento_id": apartamento_id,

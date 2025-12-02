@@ -40,7 +40,7 @@
 
 {% if termo and resultados %}
     <p class="text-muted small mb-3">
-        {{ resultados|length }} resultado{{ resultados|length|pluralize }} encontrado{{ resultados|length|pluralize }}
+        {{ total_resultados }} resultado{{ total_resultados|pluralize }} encontrado{{ resultados|length|pluralize }}
     </p>
 
     <div class="list-group">
@@ -101,5 +101,8 @@
     <div class="alert alert-warning">Nenhum resultado encontrado.</div>
 
 {% endif %}
+
+{% include "partials/paginacao.html" %}
+
 
 {% endblock %}

@@ -16,6 +16,7 @@ from urllib.parse import urlencode
 import datetime
 from datetime import date
 import re
+from django.core.paginator import Paginator
 
 
 def ler_qrcode_view(request):
@@ -201,6 +202,7 @@ def etiqueta_encomenda(request, pk):
 
 def historico_entregas(request):
     termo = request.GET.get("q", "").strip()
+    page_number = request.GET.get("page", 1)
 
     entregues = Encomenda.objects.filter(retirado=True).select_related(
         "apartamento",
@@ -222,8 +224,13 @@ def historico_entregas(request):
 
     entregues = entregues.order_by("-data_retirada")
 
+    # PAGINADOR
+    paginator = Paginator(entregues, 10)  # 10 registros por página
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "encomendas/historico.html", {
-        "entregues": entregues,
+        "page_obj": page_obj,
+        "entregues": page_obj,  # mantém compatível com o template existente
         "termo": termo,
     })
 
@@ -260,14 +267,11 @@ def buscar_moradores(request):
     return JsonResponse(data, safe=False)
 
 
-
-import re
-from django.db.models import Q
-
 def buscar_encomendas(request):
-    termo = request.GET.get("q", "").strip()
+    termo = request.GET.get("q", "").strip() or None
+    page_number = request.GET.get("page", 1)
 
-    resultados = []
+    resultados = Encomenda.objects.none()  # default vazio
 
     if termo:
 
@@ -275,18 +279,16 @@ def buscar_encomendas(request):
         # 1) BUSCAR POR SEQUENCIAL (#123)
         # --------------------------------------------------------------
         if termo.startswith("#"):
-            num = termo[1:]  # remove a cerquilha
+            num = termo[1:]  # remove o '#'
 
-            if num.isdigit():  # só aceita números
+            if num.isdigit():
                 resultados = Encomenda.objects.filter(
                     retirado=False,
                     sequencial_do_dia=num
                 ).select_related("apartamento", "morador", "apartamento__bloco")
 
-                return render(request, "encomendas/busca.html", {
-                    "termo": termo,
-                    "resultados": resultados
-                })
+            # aplica paginação e retorna
+            return render_with_pagination(request, resultados, termo, page_number)
 
         # --------------------------------------------------------------
         # 2) BUSCAR POR BLOCO/APTO (ex: 25/201)
@@ -317,10 +319,31 @@ def buscar_encomendas(request):
                 Q(sequencial_do_dia__icontains=termo)
             ).select_related("apartamento", "morador", "apartamento__bloco")
 
+    # chamada final com paginação
+    return render_with_pagination(request, resultados, termo, page_number)
+
+
+# -------------------------------------------------------------------------
+# FUNÇÃO UTILITÁRIA PARA PAGINAR E RENDERIZAR
+# -------------------------------------------------------------------------
+def render_with_pagination(request, queryset, termo, page_number):
+    total = queryset.count()  # total real antes da paginação
+
+    paginator = Paginator(queryset.order_by("-data_recebimento"), 2)
+    page_obj = paginator.get_page(page_number)
+
+    params = request.GET.copy()
+    params.pop("page", None)
+    querystring = params.urlencode()
+
     return render(request, "encomendas/busca.html", {
         "termo": termo,
-        "resultados": resultados
+        "resultados": page_obj,
+        "page_obj": page_obj,
+        "querystring": querystring,
+        "total_resultados": total,
     })
+
 
 
 def detalhes_encomenda(request, pk):
@@ -457,10 +480,11 @@ def lista_encomendas(request):
     encomendas = Encomenda.objects.filter(retirado=False)
 
     # filtros
-    bloco = request.GET.get("bloco", "")
-    apto = request.GET.get("apto", "")
-    data = request.GET.get("data", "")
-    busca = request.GET.get("busca", "")
+    bloco = request.GET.get("bloco", "").strip() or None
+    apto  = request.GET.get("apto", "").strip() or None
+    data  = request.GET.get("data", "").strip() or None
+    busca = request.GET.get("busca", "").strip() or None
+    page_number = request.GET.get("page", 1)
 
     if bloco:
         encomendas = encomendas.filter(apartamento__bloco__id=bloco)
@@ -479,11 +503,18 @@ def lista_encomendas(request):
 
     encomendas = encomendas.order_by('-data_recebimento', '-sequencial_do_dia')
 
+    # PAGINADOR
+    paginator = Paginator(encomendas, 10)   # 10 itens por página
+    page_obj = paginator.get_page(page_number)
+
     blocos = Bloco.objects.all()
     apartamentos = Apartamento.objects.all()
 
     return render(request, 'encomendas/lista_encomendas.html', {
-        'encomendas': encomendas,
+        'encomendas': page_obj,   # substitui pelo objeto paginado
+        'page_obj': page_obj,
+
+        # filtros
         'blocos': blocos,
         'apartamentos': apartamentos,
         'f_bloco': bloco,
@@ -491,6 +522,7 @@ def lista_encomendas(request):
         'f_data': data,
         'f_busca': busca,
     })
+
 def get_apartamentos(request, bloco_id):
     aps = Apartamento.objects.filter(bloco_id=bloco_id).values('id', 'numero')
     return JsonResponse(list(aps), safe=False)
