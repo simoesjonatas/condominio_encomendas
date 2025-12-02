@@ -19,6 +19,10 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6mm;
+
+            /* evita quebra entre linhas de etiquetas */
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         .etiqueta {
@@ -29,6 +33,10 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
+
+            /* AQUI ESTÁ A MAGIA */
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
         }
 
         .topo {
@@ -44,7 +52,6 @@
             justify-content: space-between;
         }
 
-        /* COLUNA ESQUERDA */
         .col-esq {
             flex: 1;
             font-size: 9pt;
@@ -53,20 +60,18 @@
             flex-direction: column;
         }
 
-        /* LINHA COM DUAS COLUNAS (# e recebido) */
         .linha-dupla {
             display: flex;
-            justify-content: flex-start;
             align-items: flex-start;
             gap: 4mm;
             margin-bottom: 2mm;
         }
 
         .numero {
-            font-size: 12pt;       /* antes 15pt */
+            font-size: 12pt;
             font-weight: bold;
             border: 1px dashed #000;
-            padding: 1.5mm 5mm;    /* um pouco menor */
+            padding: 1.5mm 5mm;
         }
 
         .recebido-info {
@@ -86,7 +91,6 @@
             text-overflow: ellipsis;
         }
 
-        /* COLUNA DIREITA */
         .col-dir {
             width: 24mm;
             display: flex;
@@ -115,7 +119,6 @@
             margin-top: auto;
             line-height: 1.2;
         }
-
     </style>
 </head>
 <body>
@@ -128,13 +131,9 @@
 
         <div class="corpo">
 
-            <!-- COLUNA ESQUERDA -->
             <div class="col-esq">
-
-                <!-- LINHA DUPLA: # e recebido -->
                 <div class="linha-dupla">
                     <div class="numero">#{{ e.sequencial_do_dia }}</div>
-
                     <div class="recebido-info">
                         Recebido: {{ e.data_recebimento }}<br>
                         Por: {{ e.recebido_por }}
@@ -156,19 +155,14 @@
                 <div class="mensagem">
                     Apresente o aviso recebido para retirada da encomenda na administração.
                 </div>
-
             </div>
 
-            <!-- COLUNA DIREITA -->
             <div class="col-dir">
-
                 <div class="bl-ap">
                     BL - {{ e.apartamento.bloco.nome }}<br>
                     AP - {{ e.apartamento.numero }}
                 </div>
-
                 <img src="{{ e.qr_code.url }}"" class="qr">
-
             </div>
 
         </div>
