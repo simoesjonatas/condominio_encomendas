@@ -24,6 +24,9 @@ def ler_qrcode_view(request):
 def ler_identificador_view(request):
     return render(request, "encomendas/ler_identificador.html")
 
+def ler_identificador_busca_view(request):
+    return render(request, "encomendas/ler_identificador_busca.html")
+
 
 def processar_qrcode_view(request):
     codigo = request.GET.get("codigo", "").strip()

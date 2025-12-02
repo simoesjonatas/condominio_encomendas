@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Ler Identificador do Pacote{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3"><i class="bi bi-upc-scan"></i> Ler Identificador do Pacote</h3>
+
+<a href="javascript:history.back()" class="btn btn-outline-secondary mb-3">
+    <i class="bi bi-arrow-left"></i> Voltar
+</a>
+
+<div style="position:relative; text-align:center;">
+    
+    <!-- Caixa -->
+    <div id="scanner-box" style="
+        position:absolute;
+        top:50%; left:50%;
+        width:240px; height:240px;
+        border:3px solid rgba(255,255,255,0.8);
+        border-radius:12px;
+        transform:translate(-50%, -50%);
+        z-index:10;
+        pointer-events:none;
+    ">
+        <div id="laser-line"></div>
+    </div>
+
+    <video id="preview" style="width:100%; max-width:480px; border-radius:10px; background:#000;"></video>
+
+    <button id="flash-btn" class="btn btn-dark mt-3" style="display:none;">
+        <i class="bi bi-lightning-charge-fill"></i> Flash
+    </button>
+</div>
+
+<audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+<style>
+#laser-line {
+    position:absolute;
+    left:0; right:0;
+    height:3px;
+    background:linear-gradient(to right, transparent, red, transparent);
+    animation:laser-sweep 2s infinite ease-in-out;
+}
+@keyframes laser-sweep {
+    0% { top:5%; }
+    50% { top:90%; }
+    100% { top:5%; }
+}
+</style>
+
+<script>
+let video = document.getElementById("preview");
+let beep = document.getElementById("beep");
+let currentStream = null;
+
+// -----------------------------
+// Iniciar câmera
+// -----------------------------
+async function startCamera() {
+    currentStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+    });
+    video.srcObject = currentStream;
+    video.setAttribute("playsinline", true);
+    video.play();
+
+    scanLoopQR();
+    startBarcodeScanner();
+}
+startCamera();
+
+// -----------------------------
+// QR CODE
+// -----------------------------
+function scanLoopQR() {
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const qr = jsQR(imageData.data, canvas.width, canvas.height);
+
+        if (qr) {
+            processCode(qr.data);
+            return;
+        }
+    }
+    requestAnimationFrame(scanLoopQR);
+}
+
+// -----------------------------
+// Barcode (1D)
+// -----------------------------
+function startBarcodeScanner() {
+    Quagga.init({
+        inputStream: {
+            type: "LiveStream",
+            target: video,
+            constraints: { facingMode: "environment" }
+        },
+        decoder: {
+            readers: ["code_128_reader", "ean_reader", "code_39_reader"]
+        }
+    }, function(err) {
+        if (!err) Quagga.start();
+    });
+
+    Quagga.onDetected(function(result) {
+        if (result.codeResult.code) {
+            processCode(result.codeResult.code);
+            Quagga.stop();
+        }
+    });
+}
+
+// -----------------------------
+// PROCESSAR código lido
+// -----------------------------
+function processCode(code) {
+
+    beep.play().catch(()=>{});
+
+    // Redireciona para busca com o código lido
+    window.location.href = "/encomendas/buscar/?q=" + encodeURIComponent(code);
+}
+
+</script>
+
+{% endblock %}
