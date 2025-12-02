@@ -32,57 +32,127 @@
     </p>
 </div>
 
-<h5>Assinaturas encontradas no período: {{ encomendas|length }}</h5>
+<h5>
+    Assinaturas encontradas no período: {{ total }}<br>
+    <small class="text-muted">
+        Exibindo {{ encomendas|length }} nesta página.
+    </small>
+</h5>
 
-<table class="table table-bordered mt-3">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Morador</th>
-            <th>Apto</th>
-            <th>Data</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for e in encomendas %}
-        <tr>
-            <td>{{ e.id }}</td>
-            <td>{{ e.retirado_por }}</td>
-            <td>{{ e.apartamento.bloco.nome }} / {{ e.apartamento.numero }}</td>
-            <td>{{ e.data_retirada|date:"d/m/Y H:i" }}</td>
-        </tr>
+<div class="table-responsive">
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Morador</th>
+                <th>Apto</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in encomendas %}
+            <tr>
+                <td>{{ e.id }}</td>
+                <td>{{ e.retirado_por }}</td>
+                <td>{{ e.apartamento.bloco.nome }} / {{ e.apartamento.numero }}</td>
+                <td>{{ e.data_retirada|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center text-muted">
+                    Nenhuma assinatura encontrada para o período selecionado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.has_other_pages %}
+<nav aria-label="Paginação">
+    <ul class="pagination justify-content-center">
+
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.previous_page_number }}&data_inicio={{ data_inicio|default:'' }}&data_fim={{ data_fim|default:'' }}">
+               Anterior
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link"
+               href="?page={{ num }}&data_inicio={{ data_inicio|default:'' }}&data_fim={{ data_fim|default:'' }}">
+               {{ num }}
+            </a>
+        </li>
         {% endfor %}
-    </tbody>
-</table>
 
-<form method="post" action="{% url 'executar_apagar_assinaturas' %}">
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.next_page_number }}&data_inicio={{ data_inicio|default:'' }}&data_fim={{ data_fim|default:'' }}">
+               Próxima
+            </a>
+        </li>
+        {% endif %}
+
+    </ul>
+</nav>
+{% endif %}
+
+<form method="post" action="{% url 'executar_apagar_assinaturas' %}" class="mt-4">
     {% csrf_token %}
-    <input type="hidden" name="data_inicio" value="{{ data_inicio }}">
-    <input type="hidden" name="data_fim" value="{{ data_fim }}">
+    <input type="hidden" name="data_inicio" value="{{ data_inicio|default:'' }}">
+    <input type="hidden" name="data_fim" value="{{ data_fim|default:'' }}">
 
     <div class="mb-3">
         <label class="form-label">
             Para confirmar a exclusão das assinaturas, digite <strong>CONFIRMAR</strong> abaixo:
         </label>
         <input type="text"
+               id="confirm_text"
                name="confirm_text"
                class="form-control"
                placeholder="Digite CONFIRMAR para prosseguir"
+               autocomplete="off"
                required>
         <small class="text-muted">
             Esta ação apagará apenas as imagens das assinaturas, mantendo os registros das entregas.
         </small>
     </div>
 
-    <button class="btn btn-danger btn-lg w-100 mt-3">
+    <button id="btn-confirmar-exclusao"
+            class="btn btn-danger btn-lg w-100 mt-3"
+            type="submit"
+            disabled>
         <i class="bi bi-trash-fill"></i>
         SIM, apagar apenas as assinaturas para liberar espaço
     </button>
 </form>
 
-
 <a href="{% url 'listar_assinaturas' %}" class="btn btn-secondary w-100 mt-3">
     Cancelar
 </a>
+
+<script>
+    (function() {
+        const input = document.getElementById('confirm_text');
+        const btn = document.getElementById('btn-confirmar-exclusao');
+
+        if (!input || !btn) return;
+
+        function atualizarBotao() {
+            const valor = (input.value || '').trim();
+            btn.disabled = valor !== 'CONFIRMAR';
+        }
+
+        input.addEventListener('input', atualizarBotao);
+        // garantir estado inicial
+        atualizarBotao();
+    })();
+</script>
 
 {% endblock %}

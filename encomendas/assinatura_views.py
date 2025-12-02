@@ -117,11 +117,12 @@ def baixar_assinaturas_zip(request):
 def confirmar_apagar_assinaturas(request):
     data_inicio = request.GET.get("data_inicio")
     data_fim = request.GET.get("data_fim")
+    page = request.GET.get("page", 1)
 
     encomendas = Encomenda.objects.filter(
         retirado=True,
         assinatura__isnull=False
-    )
+    ).select_related("apartamento", "apartamento__bloco")
 
     if data_inicio:
         try:
@@ -137,8 +138,13 @@ def confirmar_apagar_assinaturas(request):
         except:
             pass
 
+    paginator = Paginator(encomendas, 10)
+    page_obj = paginator.get_page(page)
+
     return render(request, "encomendas/confirmar_apagar_assinaturas.html", {
-        "encomendas": encomendas,
+        "page_obj": page_obj,
+        "encomendas": page_obj,
+        "total": encomendas.count(),
         "data_inicio": data_inicio,
         "data_fim": data_fim
     })
