@@ -25,7 +25,7 @@
     </div>
 
     <!-- Morador -->
-    <div class="mb-3">
+    <div class="mb-3" hidden>
         <strong>Morador:</strong>
         {% if e.morador %}
             {{ e.morador.nome }}
@@ -43,7 +43,7 @@
 
     <!-- Identificador pacote: -->
     <div class="mb-3">
-        <strong>Identificador pacote::</strong> {{ e.identificador_pacote }}
+        <strong>Identificador pacote:</strong> {{ e.identificador_pacote }}
     </div>
 
     <!-- Local -->
