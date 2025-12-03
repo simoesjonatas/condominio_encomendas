@@ -268,7 +268,9 @@ def buscar_moradores(request):
 
 
 def buscar_encomendas(request):
-    termo = request.GET.get("q", "").strip() or None
+    # termo = request.GET.get("q", "").strip() or None
+    termo = request.GET.get("q", "").strip()
+
     page_number = request.GET.get("page", 1)
 
     resultados = Encomenda.objects.none()  # default vazio
@@ -483,7 +485,7 @@ def lista_encomendas(request):
     bloco = request.GET.get("bloco", "").strip() or None
     apto  = request.GET.get("apto", "").strip() or None
     data  = request.GET.get("data", "").strip() or None
-    busca = request.GET.get("busca", "").strip() or None
+    busca = request.GET.get("busca", "").strip()
     page_number = request.GET.get("page", 1)
 
     if bloco:

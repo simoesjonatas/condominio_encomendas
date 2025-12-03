@@ -8,7 +8,8 @@ from django.core.paginator import Paginator
 
 # Listar blocos
 def lista_blocos(request):
-    termo = request.GET.get("q", "").strip() or None
+    # termo = request.GET.get("q", "").strip() or None
+    termo = request.GET.get("q", "").strip()
     page_number = request.GET.get("page", 1)
 
     blocos = Bloco.objects.all()
@@ -16,7 +17,7 @@ def lista_blocos(request):
     if termo:
         blocos = blocos.filter(nome__icontains=termo)
 
-    blocos = blocos.order_by("nome")
+    blocos = blocos.order_by("id")
 
     # PAGINADOR
     paginator = Paginator(blocos, 10)
@@ -52,7 +53,7 @@ def novo_bloco(request):
 # Listar apartamentos
 def lista_apartamentos(request):
     bloco_id = request.GET.get("bloco", "").strip() or None
-    numero   = request.GET.get("numero", "").strip() or None
+    numero   = request.GET.get("numero", "").strip()
     page_number = request.GET.get("page", 1)
 
     apartamentos = Apartamento.objects.select_related("bloco")
@@ -102,7 +103,7 @@ def novo_apartamento(request):
 # Listar moradores
 def lista_moradores(request):
     # --- PEGANDO E LIMANDO OS FILTROS ---
-    nome = request.GET.get("nome", "").strip() or None
+    nome = request.GET.get("nome", "").strip()
     bloco_id = request.GET.get("bloco", "").strip() or None
     apartamento_id = request.GET.get("apartamento", "").strip() or None
     page_number = request.GET.get("page", 1)
