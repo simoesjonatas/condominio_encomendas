@@ -63,37 +63,42 @@
         </button>
     </form>
 </div>
-
 <script>
 const canvas = document.getElementById("pad");
 const ctx = canvas.getContext("2d");
 let desenhando = false;
 
-// Ajusta a resolução real do canvas para evitar assinatura pixelada
 function ajustarCanvas() {
     const displayWidth = canvas.clientWidth;
     const displayHeight = canvas.clientHeight;
 
-    canvas.width = displayWidth * 2;   // aumenta resolução
+    // alta resolução, mas sem scale()
+    canvas.width = displayWidth * 2;
     canvas.height = displayHeight * 2;
 
-    ctx.scale(2, 2);
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "black";
 }
 
+// Ajusta somente no carregamento
 ajustarCanvas();
-window.addEventListener("resize", ajustarCanvas);
 
-// Função para bloquear scroll enquanto desenha
-function bloquearScroll(e) {
-    e.preventDefault();
-}
-
-// Posição do mouse/toque relativa ao canvas
+// posição corrigida considerando o canvas real x canvas visual
 function pos(e) {
     const rect = canvas.getBoundingClientRect();
-    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    const x = (clientX - rect.left) * (canvas.width / rect.width);
+    const y = (clientY - rect.top) * (canvas.height / rect.height);
+
     return { x, y };
+}
+
+function bloquearScroll(e) {
+    e.preventDefault();
 }
 
 // DESKTOP
@@ -103,12 +108,10 @@ canvas.addEventListener("mousedown", () => {
 });
 canvas.addEventListener("mouseup", () => desenhando = false);
 canvas.addEventListener("mouseleave", () => desenhando = false);
+
 canvas.addEventListener("mousemove", function(e) {
     if (!desenhando) return;
     const p = pos(e);
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "black";
     ctx.lineTo(p.x, p.y);
     ctx.stroke();
     ctx.beginPath();
@@ -124,15 +127,11 @@ canvas.addEventListener("touchstart", function(e) {
 
 canvas.addEventListener("touchend", function(e) {
     desenhando = false;
-    bloquearScroll(e);
 }, { passive: false });
 
 canvas.addEventListener("touchmove", function(e) {
     if (!desenhando) return;
     const p = pos(e);
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "black";
     ctx.lineTo(p.x, p.y);
     ctx.stroke();
     ctx.beginPath();
@@ -140,33 +139,28 @@ canvas.addEventListener("touchmove", function(e) {
     bloquearScroll(e);
 }, { passive: false });
 
-// Verificar se o canvas está vazio
+// Verificar se está vazio
 function canvasEstaVazio() {
-    const pixelBuffer = new Uint32Array(
-        ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
-    );
-    return !pixelBuffer.some(color => color !== 0);
+    const pixels = new Uint32Array(ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer);
+    return !pixels.some(color => color !== 0);
 }
 
-// SALVAR DESENHO NO CAMPO HIDDEN ANTES DE ENVIAR
-const form = document.getElementById("entrega-form");
-
-form.addEventListener("submit", function(e) {
-
+// processamento no submit
+document.getElementById("entrega-form").addEventListener("submit", function(e) {
     if (canvasEstaVazio()) {
         e.preventDefault();
         alert("Por favor, colete a assinatura antes de confirmar a entrega.");
         return;
     }
 
-    const campo = document.getElementById("assinatura_base64");
-    campo.value = canvas.toDataURL("image/png");
+    document.getElementById("assinatura_base64").value = canvas.toDataURL("image/png");
 });
 
-// LIMPAR CANVAS
+// limpar
 document.getElementById("limpar").addEventListener("click", function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
 </script>
+
 
 {% endblock %}
