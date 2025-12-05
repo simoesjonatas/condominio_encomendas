@@ -30,7 +30,6 @@
     <form method="post" id="entrega-form">
         {% csrf_token %}
 
-        <!-- Campo hidden que vai receber o base64 da assinatura -->
         <input type="hidden" name="assinatura_base64" id="assinatura_base64">
 
         <div class="mb-3">
@@ -38,14 +37,16 @@
             {{ form.retirado_por }}
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3 text-center">
             <label class="form-label fw-semibold">Assinatura</label>
 
-            <canvas id="pad"
-                    width="350"
-                    height="200"
-                    style="border: 1px solid #ccc; border-radius: 6px; background:white;">
-            </canvas>
+            <!-- Canvas responsivo -->
+            <div style="width: 100%; display:flex; justify-content:center;">
+                <canvas id="pad"
+                        style="width: 100%; max-width: 600px; height: 260px;
+                               border: 1px solid #ccc; border-radius: 6px; background:white;">
+                </canvas>
+            </div>
 
             <button type="button" id="limpar"
                     class="btn btn-sm btn-warning mt-2 w-100">
@@ -64,16 +65,30 @@
 </div>
 
 <script>
-// --- setup do canvas ---
 const canvas = document.getElementById("pad");
 const ctx = canvas.getContext("2d");
 let desenhando = false;
 
-// impedir scroll enquanto desenha em mobile
+// Ajusta a resolução real do canvas para evitar assinatura pixelada
+function ajustarCanvas() {
+    const displayWidth = canvas.clientWidth;
+    const displayHeight = canvas.clientHeight;
+
+    canvas.width = displayWidth * 2;   // aumenta resolução
+    canvas.height = displayHeight * 2;
+
+    ctx.scale(2, 2);
+}
+
+ajustarCanvas();
+window.addEventListener("resize", ajustarCanvas);
+
+// Função para bloquear scroll enquanto desenha
 function bloquearScroll(e) {
     e.preventDefault();
 }
 
+// Posição do mouse/toque relativa ao canvas
 function pos(e) {
     const rect = canvas.getBoundingClientRect();
     const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
@@ -88,7 +103,6 @@ canvas.addEventListener("mousedown", () => {
 });
 canvas.addEventListener("mouseup", () => desenhando = false);
 canvas.addEventListener("mouseleave", () => desenhando = false);
-
 canvas.addEventListener("mousemove", function(e) {
     if (!desenhando) return;
     const p = pos(e);
@@ -126,17 +140,30 @@ canvas.addEventListener("touchmove", function(e) {
     bloquearScroll(e);
 }, { passive: false });
 
+// Verificar se o canvas está vazio
+function canvasEstaVazio() {
+    const pixelBuffer = new Uint32Array(
+        ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+    );
+    return !pixelBuffer.some(color => color !== 0);
+}
+
 // SALVAR DESENHO NO CAMPO HIDDEN ANTES DE ENVIAR
 const form = document.getElementById("entrega-form");
 
-form.addEventListener("submit", function() {
+form.addEventListener("submit", function(e) {
+
+    if (canvasEstaVazio()) {
+        e.preventDefault();
+        alert("Por favor, colete a assinatura antes de confirmar a entrega.");
+        return;
+    }
+
     const campo = document.getElementById("assinatura_base64");
-    const dataUrl = canvas.toDataURL("image/png");
-    console.log("Gerando assinatura base64:", dataUrl.substring(0, 50) + "...");
-    campo.value = dataUrl;
+    campo.value = canvas.toDataURL("image/png");
 });
 
-// BOTÃO LIMPAR
+// LIMPAR CANVAS
 document.getElementById("limpar").addEventListener("click", function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
