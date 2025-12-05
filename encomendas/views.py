@@ -106,52 +106,63 @@ def dashboard_view(request):
     hoje = timezone.now().date()
     sete_dias = hoje - datetime.timedelta(days=6)
 
-    # 1) Buscar encomendas dos últimos 7 dias
-    qs = Encomenda.objects.filter(
+    # -------------------------
+    # 1) RECEBIDAS NOS ÚLTIMOS 7 DIAS
+    # -------------------------
+    recebidas_qs = Encomenda.objects.filter(
         data_recebimento__range=(sete_dias, hoje)
     ).order_by("data_recebimento")
 
-    # 2) Criar dicionário base com 0 para todos os dias
-    dias_labels = []
-    dias_totais = []
-    dias_dict = {}
+    recebidas_dict = {sete_dias + datetime.timedelta(days=i): 0 for i in range(7)}
+    for e in recebidas_qs:
+        recebidas_dict[e.data_recebimento] += 1
 
-    for i in range(7):
-        dia = sete_dias + datetime.timedelta(days=i)
-        dias_dict[dia] = 0
+    recebidas_labels = [dia.strftime("%d/%m") for dia in recebidas_dict]
+    recebidas_totais = list(recebidas_dict.values())
 
-    # 3) Contabilizar manualmente
-    for e in qs:
-        dias_dict[e.data_recebimento] += 1
+    # -------------------------
+    # 2) ENTREGUES NOS ÚLTIMOS 7 DIAS
+    # -------------------------
+    entregues_qs = Encomenda.objects.filter(
+        data_retirada__date__range=(sete_dias, hoje),
+        retirado=True
+    ).order_by("data_retirada")
 
-    # 4) Preparar listas para o Chart.js
-    for dia, total in dias_dict.items():
-        dias_labels.append(dia.strftime("%d/%m"))
-        dias_totais.append(total)
+    entregues_dict = {sete_dias + datetime.timedelta(days=i): 0 for i in range(7)}
+    for e in entregues_qs:
+        dia = e.data_retirada.date()
+        if dia in entregues_dict:
+            entregues_dict[dia] += 1
 
-    # --- RESTO DA VIEW FICA IGUAL ---
-    pendentes_hoje = Encomenda.objects.filter(data_recebimento=hoje, retirado=False).count()
-    entregues_hoje = Encomenda.objects.filter(data_retirada__date=hoje).count()
+    entregues_labels = [dia.strftime("%d/%m") for dia in entregues_dict]
+    entregues_totais = list(entregues_dict.values())
 
-    top_moradores = (
-        Encomenda.objects
-        .filter(morador__isnull=False)
-        .values("morador__nome")
-        .annotate(total=Count("id"))
-        .order_by("-total")[:5]
-    )
+    # -------------------------
+    # 3) BIG NUMBERS
+    # -------------------------
+    pendentes_hoje = Encomenda.objects.filter(
+        data_recebimento=hoje,
+        retirado=False
+    ).count()
 
-    moradores_labels = [item["morador__nome"] for item in top_moradores]
-    moradores_totais = [item["total"] for item in top_moradores]
+    entregues_hoje = Encomenda.objects.filter(
+        data_retirada__date=hoje
+    ).count()
+
+    recebidas_hoje = Encomenda.objects.filter(
+        data_recebimento=hoje
+    ).count()
 
     return render(request, "encomendas/dashboard.html", {
-        "dias_labels": dias_labels,
-        "dias_totais": dias_totais,
         "pendentes_hoje": pendentes_hoje,
         "entregues_hoje": entregues_hoje,
-        "moradores_labels": moradores_labels,
-        "moradores_totais": moradores_totais,
+        "recebidas_hoje": recebidas_hoje,
+        "recebidas_labels": recebidas_labels,
+        "recebidas_totais": recebidas_totais,
+        "entregues_labels": entregues_labels,
+        "entregues_totais": entregues_totais,
     })
+
 
 def confirmar_entrega_view(request, pk):
     encomenda = get_object_or_404(Encomenda, pk=pk)

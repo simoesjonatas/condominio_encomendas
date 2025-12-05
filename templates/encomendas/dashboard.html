@@ -3,73 +3,79 @@
 
 {% block content %}
 
-<h3 class="mb-4"><i class="bi bi-speedometer"></i> Dashboard</h3>
+<h3 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h3>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="vstack gap-4">
-
-    <!-- GRÁFICO 1 -->
-    <div class="card p-3 shadow-sm">
-        <h5 class="text-center mb-3">Encomendas – Últimos 7 dias</h5>
-        <canvas id="graficoDias"></canvas>
+<!-- BIG NUMBERS -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card text-center p-4 shadow-sm">
+            <h6 class="text-muted mb-1">Recebidas Hoje</h6>
+            <h2 class="display-5 fw-bold text-primary">{{ recebidas_hoje }}</h2>
+        </div>
     </div>
 
-    <!-- GRÁFICO 2 -->
-    <div class="card p-3 shadow-sm">
-        <h5 class="text-center mb-3">Status das encomendas – Hoje</h5>
-        <canvas id="graficoStatus"></canvas>
+    <div class="col-md-4 mb-3">
+        <div class="card text-center p-4 shadow-sm">
+            <h6 class="text-muted mb-1">Pendentes Hoje</h6>
+            <h2 class="display-5 fw-bold text-warning">{{ pendentes_hoje }}</h2>
+        </div>
     </div>
 
-    <!-- GRÁFICO 3 -->
-    <div class="card p-3 shadow-sm">
-        <h5 class="text-center mb-3">Top 5 moradores que mais recebem</h5>
-        <canvas id="graficoMoradores"></canvas>
+    <div class="col-md-4 mb-3">
+        <div class="card text-center p-4 shadow-sm">
+            <h6 class="text-muted mb-1">Entregues Hoje</h6>
+            <h2 class="display-5 fw-bold text-success">{{ entregues_hoje }}</h2>
+        </div>
     </div>
-
 </div>
 
+
+<!-- GRÁFICO DE RECEBIDAS -->
+<div class="card p-3 shadow-sm mb-4">
+    <h5 class="text-center mb-3">Encomendas Recebidas – Últimos 7 dias</h5>
+    <canvas id="graficoRecebidas"></canvas>
+</div>
+
+<!-- GRÁFICO DE ENTREGUES -->
+<div class="card p-3 shadow-sm">
+    <h5 class="text-center mb-3">Encomendas Entregues – Últimos 7 dias</h5>
+    <canvas id="graficoEntregues"></canvas>
+</div>
+
+
 <script>
-/* ---------- GRÁFICO DE BARRAS/DIAS ---------- */
-new Chart(document.getElementById('graficoDias'), {
-    type: 'bar',
+// --------------------- GRÁFICO RECEBIDAS ------------------------
+new Chart(document.getElementById('graficoRecebidas'), {
+    type: 'line',
     data: {
-        labels: {{ dias_labels|safe }},
+        labels: {{ recebidas_labels|safe }},
         datasets: [{
-            label: 'Encomendas',
-            data: {{ dias_totais|safe }},
-            backgroundColor: '#0d6efd'
+            label: 'Recebidas',
+            data: {{ recebidas_totais|safe }},
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+            tension: 0.3,
+            fill: true
         }]
     },
 });
 
-/* ---------- ROSQUINHA – PENDENTES/ENTREGUES ---------- */
-new Chart(document.getElementById('graficoStatus'), {
-    type: 'doughnut',
+// --------------------- GRÁFICO ENTREGUES ------------------------
+new Chart(document.getElementById('graficoEntregues'), {
+    type: 'line',
     data: {
-        labels: ['Pendentes', 'Entregues'],
+        labels: {{ entregues_labels|safe }},
         datasets: [{
-            data: [{{ pendentes_hoje }}, {{ entregues_hoje }}],
-            backgroundColor: ['#ffc107', '#198754']
+            label: 'Entregues',
+            data: {{ entregues_totais|safe }},
+            borderColor: '#198754',
+            backgroundColor: 'rgba(25, 135, 84, 0.2)',
+            tension: 0.3,
+            fill: true
         }]
     },
-});
-
-/* ---------- TOP MORADORES ---------- */
-new Chart(document.getElementById('graficoMoradores'), {
-    type: 'bar',
-    data: {
-        labels: {{ moradores_labels|safe }},
-        datasets: [{
-            label: 'Encomendas Recebidas',
-            data: {{ moradores_totais|safe }},
-            backgroundColor: '#6610f2'
-        }]
-    },
-    options: {
-        indexAxis: 'y'
-    }
 });
 </script>
 
