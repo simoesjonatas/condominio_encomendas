@@ -145,6 +145,10 @@ def dashboard_view(request):
         retirado=False
     ).count()
 
+    pendentes_total = Encomenda.objects.filter(
+        retirado=False
+    ).count()
+
     entregues_hoje = Encomenda.objects.filter(
         data_retirada__date=hoje
     ).count()
@@ -155,6 +159,7 @@ def dashboard_view(request):
 
     return render(request, "encomendas/dashboard.html", {
         "pendentes_hoje": pendentes_hoje,
+        "pendentes_total": pendentes_total,
         "entregues_hoje": entregues_hoje,
         "recebidas_hoje": recebidas_hoje,
         "recebidas_labels": recebidas_labels,
