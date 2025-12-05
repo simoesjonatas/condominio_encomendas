@@ -106,6 +106,27 @@ document.getElementById("apartamento").addEventListener("change", function() {
             });
         });
 });
+
+// === CARREGAR APARTAMENTOS DO BLOCO ATUAL AO ABRIR A PÁGINA ===
+document.addEventListener("DOMContentLoaded", function () {
+    const blocoSelect = document.getElementById("bloco");
+    const blocoId = blocoSelect.value;
+
+    if (blocoId) {
+        fetch("{% url 'get_apartamentos' 0 %}".replace("0", blocoId))
+            .then(r => r.json())
+            .then(data => {
+                const select = document.getElementById("apartamento");
+                const selectedApto = "{{ selected_apto }}";
+
+                select.innerHTML = "";
+                data.forEach(ap => {
+                    select.innerHTML += `<option value="${ap.id}" ${ap.id == selectedApto ? "selected" : ""}>${ap.numero}</option>`;
+                });
+            });
+    }
+});
+
 </script>
 
 
