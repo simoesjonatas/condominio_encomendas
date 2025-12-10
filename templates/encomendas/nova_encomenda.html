@@ -210,6 +210,18 @@ document.getElementById("btn-scan").addEventListener("click", function() {
     window.location.href = "/encomendas/scan-identificador/?" + params.toString();
 });
 
+// Impedir múltiplos envios do formulário
+$("form").on("submit", function (e) {
+    const btn = $(this).find("button[type='submit'], button.btn-primary");
+
+    // desabilita clique duplo
+    btn.prop("disabled", true);
+    btn.html('<i class="bi bi-hourglass-split"></i> Salvando...');
+
+    // opcional: bloquear duplo clique no Enter também
+    $(this).find("input, select, textarea").prop("readonly", true);
+});
+
 </script>
 
 {% endblock %}
