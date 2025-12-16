@@ -65,7 +65,9 @@
 
     </div>
 
-    <!-- PAGINAÇÃO -->
+    {% include "partials/paginacao.html" %}
+
+    {% comment %} <!-- PAGINAÇÃO -->
     <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
 
@@ -94,7 +96,7 @@
             {% endif %}
 
         </ul>
-    </nav>
+    </nav> {% endcomment %}
 
 {% else %}
     <div class="alert alert-info">

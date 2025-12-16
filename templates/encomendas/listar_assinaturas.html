@@ -102,9 +102,11 @@
         {% endfor %}
     </tbody>
 </table>
+
+{% include "partials/paginacao.html" %}
 </div>
 
-
+{% comment %} 
 
 <!-- PAGINAÇÃO -->
 {% if page_obj.has_other_pages %}
@@ -140,6 +142,6 @@
 
     </ul>
 </nav>
-{% endif %}
+{% endif %} {% endcomment %}
 
 {% endblock %}
