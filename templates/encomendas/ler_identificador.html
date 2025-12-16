@@ -10,6 +10,10 @@
     <i class="bi bi-arrow-left"></i> Voltar
 </a>
 
+<p class="text-muted">
+    Aponte a câmera para o QR Code ou código de barras. A leitura é automática.
+</p>
+
 <div style="position:relative; text-align:center;">
     
     <!-- Caixa de foco -->
@@ -55,6 +59,10 @@
     100% { box-shadow:0 0 0px 0 rgba(255,255,255,0.7); }
 }
 
+#scanner-box {
+    animation: pulse 2s infinite;
+}
+
 #laser-line {
     position:absolute;
     left:0;
@@ -77,56 +85,105 @@
 }
 </style>
 
+<!-- ================================
+      MODAL DE PRÉ-VISUALIZAÇÃO
+================================ -->
+<div id="preview-modal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+          <div class="modal-header">
+              <h5 class="modal-title"><i class="bi bi-search"></i> Código detectado</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body text-center">
+              <p class="text-muted">Confira o código lido:</p>
+              <h3 id="codigo-preview" class="fw-bold"></h3>
+          </div>
+
+          <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal" id="cancelar-btn">
+                  Cancelar
+              </button>
+
+              <button class="btn btn-success" id="confirmar-btn">
+                  Confirmar <i class="bi bi-check-lg"></i>
+              </button>
+          </div>
+
+      </div>
+  </div>
+</div>
+
 <script>
+const redirectUrl = "{% url 'nova_encomenda' %}";
+
 let video = document.getElementById("preview");
 let beep = document.getElementById("beep");
 let currentStream = null;
 let flashOn = false;
+let scanning = false;
 
-// =========================================================
+// Canvas único (performance)
+const canvas = document.createElement("canvas");
+const ctx = canvas.getContext("2d");
+
+
+// =============================
 // INICIAR CÂMERA
-// =========================================================
+// =============================
 async function startCamera() {
-    const constraints = {
-        video: {
-            facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            advanced: [{ torch: false }]
-        }
-    };
+    try {
+        const constraints = {
+            video: {
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                advanced: [{ torch: false }]
+            }
+        };
 
-    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = currentStream;
-    video.setAttribute("playsinline", true);
-    video.play();
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = currentStream;
+        video.setAttribute("playsinline", true);
+        await video.play();
 
-    enableFlashIfSupported();
-    scanLoopQR();        // QR Code
-    startBarcodeScanner(); // Cod. Barras 1D
+        enableFlashIfSupported();
+
+        scanning = true;
+        scanLoopQR();
+        startBarcodeScanner();
+
+    } catch (err) {
+        console.error("Erro ao iniciar câmera:", err);
+        alert("Não foi possível acessar a câmera.");
+    }
 }
 startCamera();
 
 
-// =========================================================
+// =============================
 // FLASH
-// =========================================================
+// =============================
 function enableFlashIfSupported() {
+    if (!currentStream) return;
     const track = currentStream.getVideoTracks()[0];
-    const capabilities = track.getCapabilities();
-
+    const capabilities = track.getCapabilities ? track.getCapabilities() : {};
     if ("torch" in capabilities) {
         document.getElementById("flash-btn").style.display = "inline-block";
     }
 }
 
 document.getElementById("flash-btn").onclick = function () {
+    if (!currentStream) return;
     const track = currentStream.getVideoTracks()[0];
+
     flashOn = !flashOn;
 
     track.applyConstraints({
         advanced: [{ torch: flashOn }]
-    });
+    }).catch(err => console.error("Erro ao ativar flash:", err));
 
     this.innerHTML = flashOn
         ? '<i class="bi bi-lightning-charge"></i> Flash ON'
@@ -134,14 +191,13 @@ document.getElementById("flash-btn").onclick = function () {
 };
 
 
-// =========================================================
-// LEITOR DE QR CODE (jsQR)
-// =========================================================
+// =============================
+// LEITOR QR (jsQR)
+// =============================
 function scanLoopQR() {
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    if (!scanning) return;
 
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
 
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -151,7 +207,7 @@ function scanLoopQR() {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const qr = jsQR(imageData.data, canvas.width, canvas.height);
 
-        if (qr) {
+        if (qr && qr.data) {
             processCode(qr.data);
             return;
         }
@@ -161,9 +217,9 @@ function scanLoopQR() {
 }
 
 
-// =========================================================
-// LEITOR DE CÓDIGO DE BARRAS 1D (QuaggaJS)
-// =========================================================
+// =============================
+// LEITOR DE BARRAS (QuaggaJS)
+// =============================
 function startBarcodeScanner() {
     Quagga.init({
         inputStream: {
@@ -194,38 +250,66 @@ function startBarcodeScanner() {
     });
 
     Quagga.onDetected(function(result) {
-        const code = result.codeResult.code;
+        if (!scanning) return;
+        const code = result.codeResult && result.codeResult.code;
         if (code) {
             processCode(code);
-            Quagga.stop();
         }
     });
 }
 
 
-// =========================================================
-// PROCESSAR QUALQUER CÓDIGO LIDO (QR ou BARRAS)
-// =========================================================
+// =============================
+// PROCESSAR CÓDIGO LIDO
+// =============================
 function processCode(code) {
-    let box = document.getElementById("scanner-box");
+    if (!scanning) return;
+    scanning = false;
 
-    // Efeito verde
+    try { Quagga.stop(); } catch(e) {}
+
+    // feedback visual
+    let box = document.getElementById("scanner-box");
     box.style.border = "3px solid #00ff55";
     box.style.boxShadow = "0 0 20px #00ff55";
 
+    if (navigator.vibrate) navigator.vibrate(80);
     beep.play().catch(() => {});
 
-    setTimeout(() => {
+    // mostra o código no modal
+    document.getElementById("codigo-preview").innerText = code;
+
+    const modal = new bootstrap.Modal(document.getElementById("preview-modal"));
+    modal.show();
+
+    // cancelar → voltar a escanear
+    document.getElementById("cancelar-btn").onclick = () => {
+        modal.hide();
+        scanning = true;
         box.style.border = "3px solid rgba(255,255,255,0.8)";
         box.style.boxShadow = "none";
-    }, 400);
+        startBarcodeScanner();
+        requestAnimationFrame(scanLoopQR);
+    };
 
-    const params = new URLSearchParams(window.location.search);
-    params.set("codigo", code);
-
-    window.location.href = "/encomendas/nova/?" + params.toString();
+    // confirmar → redirecionar
+    document.getElementById("confirmar-btn").onclick = () => {
+        const params = new URLSearchParams(window.location.search);
+        params.set("codigo", code);
+        window.location.href = redirectUrl + "?" + params.toString();
+    };
 }
 
+
+// =============================
+// LIMPAR STREAM AO SAIR
+// =============================
+window.addEventListener("beforeunload", () => {
+    try { Quagga.stop(); } catch(e) {}
+    if (currentStream) {
+        currentStream.getTracks().forEach(t => t.stop());
+    }
+});
 </script>
 
 {% endblock %}
