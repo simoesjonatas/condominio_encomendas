@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-d()w$ktj7hs914=qe0$_r-nc78&bd*h_rej2q_4e3$fqw1lj$)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','condominio.simoesti.com.br']
+ALLOWED_HOSTS = ['localhost','condominio.simoesti.com.br', '*']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://condominio.simoesti.com.br',
