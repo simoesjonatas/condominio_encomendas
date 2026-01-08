@@ -318,7 +318,7 @@ def buscar_encomendas(request):
 
             resultados = Encomenda.objects.filter(
                 retirado=False,
-                apartamento__bloco__nome__icontains=bloco_val,
+                apartamento__bloco__nome=bloco_val,
                 apartamento__numero__icontains=apto_val
             ).select_related("apartamento", "morador", "apartamento__bloco")
 
