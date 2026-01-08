@@ -374,8 +374,14 @@ def detalhes_encomenda(request, pk):
         pk=pk
     )
 
+    tem_outra_pendente = Encomenda.objects.filter(
+        retirado=False,
+        apartamento_id=encomenda.apartamento_id
+    ).exclude(pk=encomenda.pk).exists()
+
     return render(request, "encomendas/detalhes.html", {
-        "e": encomenda
+        "e": encomenda,
+        "tem_outra_pendente": tem_outra_pendente,
     })
 
 def nova_encomenda(request):

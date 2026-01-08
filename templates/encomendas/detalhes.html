@@ -119,6 +119,13 @@
 
         {% endif %}
 
+        {% if tem_outra_pendente %}
+            <a
+            href="{% url 'buscar_encomendas' %}?q={{ e.apartamento.bloco.nome|urlencode }}/{{ e.apartamento.numero|urlencode }}"
+            class="btn btn-outline-primary w-100">
+                <i class="bi bi-search"></i> Ver outras pendentes deste apto
+            </a>
+        {% endif %}
 
         <a href="{% url 'lista_encomendas' %}" class="btn btn-outline-dark w-100"> 
             {% comment %} href="javascript:history.back() {% endcomment %}
