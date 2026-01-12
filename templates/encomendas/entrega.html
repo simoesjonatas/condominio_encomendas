@@ -14,6 +14,10 @@
         <strong>Bloco:</strong> {{ e.apartamento.bloco.nome }}<br>
         <strong>Apartamento:</strong> {{ e.apartamento.numero }}<br>
         <strong>Local armazenado:</strong> {{ e.get_local_armazenado_display }}<br>
+        <!-- Descrição -->
+        {% if e.descricao %}
+                <strong>Descrição:</strong> {{ e.descricao }}<br>
+        {% endif %}
         {% comment %} <strong>Morador:</strong> 
         {% if e.morador %}
             {{ e.morador.nome }}
