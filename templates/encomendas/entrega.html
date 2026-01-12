@@ -13,12 +13,13 @@
     <p class="text-muted">
         <strong>Bloco:</strong> {{ e.apartamento.bloco.nome }}<br>
         <strong>Apartamento:</strong> {{ e.apartamento.numero }}<br>
-        <strong>Morador:</strong> 
+        <strong>Local armazenado:</strong> {{ e.get_local_armazenado_display }}<br>
+        {% comment %} <strong>Morador:</strong> 
         {% if e.morador %}
             {{ e.morador.nome }}
         {% else %}
             —
-        {% endif %}<br>
+        {% endif %}<br> {% endcomment %}
         <strong>Sequencial:</strong> #{{ e.sequencial_do_dia }}<br>
 
         {% if e.identificador_pacote %}
