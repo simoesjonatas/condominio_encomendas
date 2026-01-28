@@ -81,6 +81,23 @@
         </button> {% endcomment %}
     </form>
 </div>
+
+<!-- Botão flutuante: ir para o final -->
+<button type="button" id="btnIrFinal" class="btn btn-primary rounded-circle shadow"
+        aria-label="Ir para o final"
+        style="
+          position: fixed;
+          right: 16px;
+          bottom: 16px;
+          width: 52px;
+          height: 52px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1050;
+        ">
+  <i class="bi bi-arrow-down"></i>
+</button>
 <script>
 const canvas = document.getElementById("pad");
 const ctx = canvas.getContext("2d");
@@ -178,6 +195,38 @@ document.getElementById("entrega-form").addEventListener("submit", function(e) {
 document.getElementById("limpar").addEventListener("click", function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
+</script>
+
+
+<script>
+  // rola até o final (ou até o botão de submit, que é melhor)
+  const btnIrFinal = document.getElementById("btnIrFinal");
+  const formEntrega = document.getElementById("entrega-form");
+
+  function irParaFinal() {
+    // tenta rolar até o botão "Confirmar entrega" primeiro
+    const btnSubmit = formEntrega.querySelector('button[type="submit"]');
+    if (btnSubmit) {
+      btnSubmit.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    // fallback: final da página
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }
+
+  btnIrFinal.addEventListener("click", irParaFinal);
+
+  // opcional: esconder o botão quando já estiver bem no final
+  function atualizarVisibilidade() {
+    const margem = 120; // px
+    const chegouNoFinal =
+      window.innerHeight + window.scrollY >= document.body.scrollHeight - margem;
+
+    btnIrFinal.style.display = chegouNoFinal ? "none" : "flex";
+  }
+
+  window.addEventListener("scroll", atualizarVisibilidade, { passive: true });
+  atualizarVisibilidade();
 </script>
 
 
