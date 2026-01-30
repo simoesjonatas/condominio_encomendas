@@ -227,9 +227,6 @@ def historico_entregas(request):
     )
 
     if termo:
-        # --------------------------------------------------------------
-        # 1) BUSCAR POR BLOCO/APTO (ex: 25/201)
-        # --------------------------------------------------------------
         match = re.match(r"^(\w+)[\s]*/[\s]*(\w+)$", termo)
         if match:
             bloco_val = match.group(1)
@@ -240,9 +237,6 @@ def historico_entregas(request):
                 apartamento__numero__icontains=apto_val
             )
         else:
-            # ----------------------------------------------------------
-            # 2) BUSCA NORMAL (como já era)
-            # ----------------------------------------------------------
             entregues = entregues.filter(
                 Q(morador__nome__icontains=termo) |
                 Q(apartamento__numero__icontains=termo) |
@@ -257,10 +251,15 @@ def historico_entregas(request):
     paginator = Paginator(entregues, 10)
     page_obj = paginator.get_page(page_number)
 
+    params = request.GET.copy()
+    params.pop("page", None)
+    querystring = params.urlencode()
+
     return render(request, "encomendas/historico.html", {
         "page_obj": page_obj,
         "entregues": page_obj,
         "termo": termo,
+        "querystring": querystring,
     })
 
 
