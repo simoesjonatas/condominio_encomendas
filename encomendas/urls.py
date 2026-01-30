@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import  (
     nova_encomenda, lista_encomendas, buscar_encomendas, detalhes_encomenda, entregar_encomenda, etiqueta_encomenda,
+    detalhes_encomenda_historico,
     historico_entregas, dashboard_view, imprimir_etiquetas_lote, confirmar_entrega_view,
     ler_qrcode_view, processar_qrcode_view, ler_identificador_view,
     selecao_impressao, imprimir_encomendas, editar_encomenda,
@@ -13,6 +14,7 @@ urlpatterns = [
     path('nova/', nova_encomenda, name='nova_encomenda'),
     path('buscar/', buscar_encomendas, name='buscar_encomendas'),
     path('<int:pk>/detalhes/', detalhes_encomenda, name='detalhes_encomenda'),
+    path('<int:pk>/detalhes/historico', detalhes_encomenda_historico, name='detalhes_encomenda_historico'),
     path('<int:pk>/editar/', editar_encomenda, name='editar_encomenda'),
 
 

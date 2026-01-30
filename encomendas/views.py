@@ -375,7 +375,6 @@ def render_with_pagination(request, queryset, termo, page_number):
     })
 
 
-
 def detalhes_encomenda(request, pk):
     encomenda = get_object_or_404(
         Encomenda.objects.select_related(
@@ -394,6 +393,20 @@ def detalhes_encomenda(request, pk):
     return render(request, "encomendas/detalhes.html", {
         "e": encomenda,
         "tem_outra_pendente": tem_outra_pendente,
+    })
+
+
+def detalhes_encomenda_historico(request, pk):
+    encomenda = get_object_or_404(
+        Encomenda.objects.select_related(
+            "apartamento",
+            "apartamento__bloco",
+            "morador"
+        ),
+        pk=pk
+    )
+    return render(request, "encomendas/detalhes_historico.html", {
+        "e": encomenda
     })
 
 def nova_encomenda(request):
