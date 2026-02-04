@@ -15,12 +15,42 @@
             font-family: Arial, sans-serif;
         }
 
+        /* ===== PRINT FIX (principal) ===== */
+        @media print {
+
+            /* evita “encaixar” conteúdo cortando */
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+            /* TROCA flex por grid (grid respeita melhor quebra de página) */
+            .folha{
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                column-gap: 6mm;
+                row-gap: 6mm;
+
+                /* importante: não tentar “segurar” a folha inteira numa página */
+                page-break-inside: auto;
+                break-inside: auto;
+            }
+
+            /* NUNCA quebrar uma etiqueta no meio */
+            .etiqueta{
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+
+                /* ajuda alguns engines */
+                -webkit-column-break-inside: avoid;
+
+                /* opcional: evita “encostar” no limite da página */
+                margin: 0;
+            }
+        }
+
+        /* ===== layout normal (tela) ===== */
         .folha {
             display: flex;
             flex-wrap: wrap;
             gap: 6mm;
-            page-break-inside: avoid;
-            break-inside: avoid;
         }
 
         .etiqueta {
@@ -67,9 +97,8 @@
         }
 
         /* =========================
-        BL / AP — GRANDE E VISÍVEL
+        BL/AP — GRANDE E VISÍVEL
         ========================= */
-        /* BL/AP */
         .bl-ap {
             font-size: 13pt;
             font-weight: 800;
@@ -80,7 +109,6 @@
             text-align: center;
             flex: 0 0 auto;
 
-            /* NOVO: deixa em linha e centralizado */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -88,20 +116,14 @@
             white-space: nowrap;
         }
 
-        /* NOVO: aumenta bastante só dentro do quadrado */
         .bl-ap--grande {
-            font-size: 18pt;     /* ajuste aqui: 18, 19, 20... */
+            font-size: 18pt;
             font-weight: 900;
             line-height: 1;
         }
 
-        /* NOVO: itens e separador */
         .bl-ap__item { display: inline-block; }
         .bl-ap__sep  { display: inline-block; font-weight: 900; }
-
-
-
-
 
         /* =========================
         CORPO
@@ -122,7 +144,6 @@
             flex-direction: column;
         }
 
-        /* Número */
         .linha-dupla {
             margin-bottom: 2mm;
         }
@@ -136,14 +157,12 @@
             white-space: nowrap;
         }
 
-        /* Linhas comuns */
         .linha {
             font-size: 9pt;
             margin-bottom: 1mm;
             min-width: 0;
         }
 
-        /* Truncamento */
         .texto-truncado {
             white-space: nowrap;
             overflow: hidden;
@@ -152,7 +171,6 @@
             min-width: 0;
         }
 
-        /* Mensagem final */
         .mensagem {
             font-size: 7.6pt;
             font-weight: bold;
@@ -180,6 +198,8 @@
         .qr {
             width: 23mm;
             height: 23mm;
+            object-fit: contain;
+            display: block;
         }
     </style>
 
@@ -208,11 +228,8 @@
 
         </div>
 
-
         <div class="corpo">
-
             <div class="col-esq">
-
                 <div class="linha-dupla">
                     <div class="numero">#{{ e.sequencial_do_dia }}</div>
                 </div>
@@ -238,17 +255,11 @@
                 <div class="mensagem">
                     Apresente o aviso recebido para retirada da encomenda na administração.
                 </div>
-
             </div>
 
             <div class="col-dir">
-                {% comment %} <div class="bl-ap">
-                    BL - {{ e.apartamento.bloco.nome }}<br>
-                    AP - {{ e.apartamento.numero }}
-                </div> {% endcomment %}
-                <img src="{{ e.qr_code.url }}" class="qr">
+                <img src="{{ e.qr_code.url }}" class="qr" alt="QR Code">
             </div>
-
         </div>
 
     </div>
