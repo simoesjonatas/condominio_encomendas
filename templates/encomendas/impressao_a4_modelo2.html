@@ -31,7 +31,7 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: hidden; /* nada vaza */
         }
 
         /* =========================
@@ -41,7 +41,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 5mm;
+            gap: 4mm;
             margin-bottom: 1mm;
         }
 
@@ -49,7 +49,7 @@
             display: flex;
             flex-direction: column;
             gap: 1mm;
-            min-width: 0;
+            min-width: 0;       /* permite truncar */
             overflow: hidden;
         }
 
@@ -66,9 +66,6 @@
             margin: 0;
         }
 
-        /* =========================
-        BL / AP — GRANDE E VISÍVEL
-        ========================= */
         /* BL/AP */
         .bl-ap {
             font-size: 13pt;
@@ -79,29 +76,7 @@
             min-width: 30mm;
             text-align: center;
             flex: 0 0 auto;
-
-            /* NOVO: deixa em linha e centralizado */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2mm;
-            white-space: nowrap;
         }
-
-        /* NOVO: aumenta bastante só dentro do quadrado */
-        .bl-ap--grande {
-            font-size: 18pt;     /* ajuste aqui: 18, 19, 20... */
-            font-weight: 900;
-            line-height: 1;
-        }
-
-        /* NOVO: itens e separador */
-        .bl-ap__item { display: inline-block; }
-        .bl-ap__sep  { display: inline-block; font-weight: 900; }
-
-
-
-
 
         /* =========================
         CORPO
@@ -116,7 +91,7 @@
 
         .col-esq {
             flex: 1;
-            min-width: 0;
+            min-width: 0;       /* CRUCIAL p/ não empurrar QR */
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -143,7 +118,7 @@
             min-width: 0;
         }
 
-        /* Truncamento */
+        /* TRUNCAMENTO (Nome/Desc/ID ficam 1 linha com ...) */
         .texto-truncado {
             white-space: nowrap;
             overflow: hidden;
@@ -152,26 +127,28 @@
             min-width: 0;
         }
 
-        /* Mensagem final */
+        /* Mensagem final COMPLETA (pode quebrar linha) */
         .mensagem {
-            font-size: 7.6pt;
+            font-size: 7.6pt;        /* um pouco menor pra caber sempre */
             font-weight: bold;
             line-height: 1.15;
+
             margin-top: auto;
-
             white-space: normal;
+            word-break: normal;
             overflow-wrap: anywhere;
-
+            
             height: calc(2 * 1.15em);
             overflow: hidden;
         }
 
+
         /* =========================
-        COLUNA DIREITA (QR)
+        COLUNA DIREITA (QR FIXO)
         ========================= */
         .col-dir {
             width: 24mm;
-            flex: 0 0 24mm;
+            flex: 0 0 24mm;             /* trava a largura */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -181,8 +158,9 @@
             width: 23mm;
             height: 23mm;
         }
-    </style>
 
+
+    </style>
 </head>
 <body>
 
@@ -201,11 +179,9 @@
             </div>
 
             <div class="bl-ap bl-ap--grande">
-                <span class="bl-ap__item">{{ e.apartamento.bloco.nome }}</span>
-                <span class="bl-ap__sep">|</span>
-                <span class="bl-ap__item">{{ e.apartamento.numero }}</span>
+                BL - {{ e.apartamento.bloco.nome }}<br>
+                AP - {{ e.apartamento.numero }}
             </div>
-
         </div>
 
 
