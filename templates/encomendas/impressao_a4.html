@@ -15,42 +15,13 @@
             font-family: Arial, sans-serif;
         }
 
-        /* ===== PRINT FIX (principal) ===== */
-        @media print {
-
-            /* evita “encaixar” conteúdo cortando */
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
-            /* TROCA flex por grid (grid respeita melhor quebra de página) */
-            .folha{
-                display: grid !important;
-                grid-template-columns: 1fr 1fr;
-                column-gap: 6mm;
-                row-gap: 6mm;
-
-                /* importante: não tentar “segurar” a folha inteira numa página */
-                page-break-inside: auto;
-                break-inside: auto;
-            }
-
-            /* NUNCA quebrar uma etiqueta no meio */
-            .etiqueta{
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-
-                /* ajuda alguns engines */
-                -webkit-column-break-inside: avoid;
-
-                /* opcional: evita “encostar” no limite da página */
-                margin: 0;
-            }
-        }
-
-        /* ===== layout normal (tela) ===== */
         .folha {
             display: flex;
             flex-wrap: wrap;
             gap: 6mm;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            align-content: flex-start; /* ajuda o flex a não “esticar” e reduzir bugs no print */
         }
 
         .etiqueta {
@@ -97,7 +68,7 @@
         }
 
         /* =========================
-        BL/AP — GRANDE E VISÍVEL
+        BL / AP — GRANDE E VISÍVEL
         ========================= */
         .bl-ap {
             font-size: 13pt;
@@ -198,8 +169,29 @@
         .qr {
             width: 23mm;
             height: 23mm;
-            object-fit: contain;
-            display: block;
+        }
+
+        /* =========================
+        CORREÇÃO: não “quebrar” etiqueta entre páginas
+        e “pular” página quando não couber
+        (10 etiquetas por página: 5 linhas x 2 colunas)
+        ========================= */
+        @media print {
+            .etiqueta {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* a cada 10 etiquetas, começa uma nova página */
+            .etiqueta:nth-child(10n+1) {
+                break-before: page;
+                page-break-before: always;
+            }
+            /* não aplicar no primeiro item */
+            .etiqueta:nth-child(1) {
+                break-before: auto;
+                page-break-before: auto;
+            }
         }
     </style>
 
@@ -229,7 +221,9 @@
         </div>
 
         <div class="corpo">
+
             <div class="col-esq">
+
                 <div class="linha-dupla">
                     <div class="numero">#{{ e.sequencial_do_dia }}</div>
                 </div>
@@ -255,11 +249,13 @@
                 <div class="mensagem">
                     Apresente o aviso recebido para retirada da encomenda na administração.
                 </div>
+
             </div>
 
             <div class="col-dir">
-                <img src="{{ e.qr_code.url }}" class="qr" alt="QR Code">
+                <img src="{{ e.qr_code.url }}" class="qr">
             </div>
+
         </div>
 
     </div>
