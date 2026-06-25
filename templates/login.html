@@ -1,70 +1,244 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Condomínio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar - Encomendas</title>
 
-    <link 
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" 
-        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
         body {
-            background: #f0f2f5;
-            height: 100vh;
+            min-height: 100vh;
+            margin: 0;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: linear-gradient(135deg, #e8efff 0%, #f5f7fb 50%, #eef2ff 100%);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         }
 
-        .login-card {
+        .login-wrap {
             width: 100%;
-            max-width: 380px;
-            padding: 30px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 0 12px rgba(0,0,0,0.1);
+            max-width: 940px;
+            background: #fff;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 24px 70px rgba(13, 110, 253, .18);
         }
 
-        h3 {
+        /* ---------- Painel da marca ---------- */
+        .brand-side {
+            position: relative;
+            color: #fff;
+            padding: 3.25rem;
+            background: linear-gradient(150deg, #0d6efd 0%, #0a58ca 55%, #084298 100%);
+            overflow: hidden;
+        }
+
+        .brand-side::before,
+        .brand-side::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .08);
+        }
+
+        .brand-side::before { width: 220px; height: 220px; top: -70px; right: -60px; }
+        .brand-side::after  { width: 160px; height: 160px; bottom: -50px; left: -40px; }
+
+        .brand-content { position: relative; z-index: 1; }
+
+        .brand-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, .15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .brand-features {
+            list-style: none;
+            padding: 0;
+            margin: 1.75rem 0 0;
+        }
+
+        .brand-features li {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            margin-bottom: .8rem;
+            color: rgba(255, 255, 255, .92);
+        }
+
+        .brand-features i {
+            font-size: 1.1rem;
+            opacity: .9;
+        }
+
+        /* ---------- Formulário ---------- */
+        .form-side { padding: 3.25rem; }
+
+        .form-side .form-control {
+            padding: .7rem .9rem;
+        }
+
+        .input-group-text {
+            background: #f1f3f6;
+            border-right: 0;
+            color: #6c757d;
+        }
+
+        .input-group .form-control {
+            border-left: 0;
+        }
+
+        .input-group .form-control:focus {
+            box-shadow: none;
+            border-color: #ced4da;
+        }
+
+        .input-group:focus-within {
+            border-radius: .5rem;
+            box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .15);
+        }
+
+        .input-group:focus-within .input-group-text,
+        .input-group:focus-within .form-control {
+            border-color: #86b7fe;
+        }
+
+        .btn-login {
+            padding: .7rem;
             font-weight: 600;
+            border-radius: .6rem;
+        }
+
+        .btn-eye {
+            background: #f1f3f6;
+            border: 1px solid #ced4da;
+            border-left: 0;
+            color: #6c757d;
+        }
+
+        .btn-eye:hover { color: #0d6efd; }
+
+        @media (max-width: 575.98px) {
+            .form-side { padding: 2rem 1.5rem; }
         }
     </style>
 </head>
 
 <body>
 
-<div class="login-card">
-    <h3 class="text-center mb-4">
-        <i class="bi bi-box-seam"></i> Condomínio
-    </h3>
+<div class="login-wrap">
+    <div class="row g-0">
 
-    {% if form.errors %}
-        <div class="alert alert-danger">
-            Usuário ou senha incorretos.
-        </div>
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-
-        <div class="mb-3">
-            <label class="form-label">Usuário</label>
-            {{ form.username }}
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Senha</label>
-            {{ form.password }}
+        <!-- Marca (escondido no mobile) -->
+        <div class="col-lg-6 brand-side d-none d-lg-flex flex-column justify-content-center">
+            <div class="brand-content">
+                <div class="brand-logo"><i class="bi bi-box-seam"></i></div>
+                <h2 class="fw-bold mb-2">Encomendas</h2>
+                <p class="mb-0" style="color: rgba(255,255,255,.85);">
+                    Controle de entregas do seu condomínio, do recebimento à retirada.
+                </p>
+                <ul class="brand-features">
+                    <li><i class="bi bi-check-circle"></i> Registro rápido de encomendas</li>
+                    <li><i class="bi bi-check-circle"></i> Retirada com assinatura e QR Code</li>
+                    <li><i class="bi bi-check-circle"></i> Etiquetas e histórico de entregas</li>
+                </ul>
+            </div>
         </div>
 
-        <button class="btn btn-primary w-100">
-            Entrar
-        </button>
-    </form>
+        <!-- Formulário -->
+        <div class="col-lg-6 form-side">
+            <!-- Logo só aparece no mobile, já que o painel some -->
+            <div class="text-center d-lg-none mb-3">
+                <i class="bi bi-box-seam text-primary" style="font-size: 2.5rem;"></i>
+            </div>
+
+            <h3 class="fw-bold mb-1">Bem-vindo de volta 👋</h3>
+            <p class="text-muted mb-4">Entre com suas credenciais para continuar.</p>
+
+            {% if form.errors %}
+                <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Usuário ou senha incorretos. Tente novamente.</span>
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="{{ form.username.id_for_label }}">Usuário</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        {{ form.username }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold" for="{{ form.password.id_for_label }}">Senha</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        {{ form.password }}
+                        <button class="btn btn-eye" type="button" id="togglePw" aria-label="Mostrar senha">
+                            <i class="bi bi-eye" id="togglePwIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary w-100 btn-login" type="submit">
+                    Entrar <i class="bi bi-box-arrow-in-right ms-1"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
 </div>
+
+<script>
+    (function () {
+        var btn = document.getElementById("togglePw");
+        var icon = document.getElementById("togglePwIcon");
+        var pw = document.getElementById("{{ form.password.id_for_label }}");
+        var user = document.getElementById("{{ form.username.id_for_label }}");
+
+        // Mostrar / ocultar senha
+        if (btn && pw) {
+            btn.addEventListener("click", function () {
+                var hidden = pw.type === "password";
+                pw.type = hidden ? "text" : "password";
+                icon.className = hidden ? "bi bi-eye-slash" : "bi bi-eye";
+                btn.setAttribute("aria-label", hidden ? "Ocultar senha" : "Mostrar senha");
+            });
+        }
+
+        // Enter envia o formulário a partir de qualquer campo
+        [user, pw].forEach(function (campo) {
+            if (!campo) return;
+            campo.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    var form = campo.form;
+                    if (form) {
+                        if (form.requestSubmit) form.requestSubmit();
+                        else form.submit();
+                    }
+                }
+            });
+        });
+    })();
+</script>
 
 </body>
 </html>

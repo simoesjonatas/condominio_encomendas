@@ -13,4 +13,5 @@ RUN pip install --upgrade pip && pip install -r requirements.txt && pip install 
 COPY . /app/
 
 # roda migrações e collectstatic antes de subir o servidor
-CMD bash -lc "python manage.py migrate && (python manage.py collectstatic --noinput || true) && gunicorn cantina.wsgi:application --bind 0.0.0.0:8000"
+# (o WhiteNoise serve os estáticos gerados aqui, sem precisar de nginx)
+CMD bash -lc "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn condominio.wsgi:application --bind 0.0.0.0:8000"

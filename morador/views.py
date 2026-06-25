@@ -4,9 +4,28 @@ from .forms import BlocoForm, ApartamentoForm, MoradorForm
 from django.db.models import Q
 from django.http import JsonResponse
 from django.core.paginator import Paginator
+from django.contrib import messages
+from functools import wraps
+
+
+def staff_required(view_func):
+    """Libera a view apenas para usuários staff ou admin (superuser).
+
+    Usuários comuns (ex.: porteiro) são redirecionados para o dashboard com
+    um aviso. A autenticação já é garantida pelo LoginRequiredMiddleware.
+    """
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        user = request.user
+        if not (user.is_staff or user.is_superuser):
+            messages.error(request, "Você não tem permissão para acessar a área de cadastros.")
+            return redirect("dashboard")
+        return view_func(request, *args, **kwargs)
+    return _wrapped
 
 
 # Listar blocos
+@staff_required
 def lista_blocos(request):
     # termo = request.GET.get("q", "").strip() or None
     termo = request.GET.get("q", "").strip()
@@ -38,6 +57,7 @@ def lista_blocos(request):
 
 
 # Criar bloco
+@staff_required
 def novo_bloco(request):
     if request.method == "POST":
         form = BlocoForm(request.POST)
@@ -51,6 +71,7 @@ def novo_bloco(request):
 
 
 # Listar apartamentos
+@staff_required
 def lista_apartamentos(request):
     bloco_id = request.GET.get("bloco", "").strip() or None
     numero   = request.GET.get("numero", "").strip()
@@ -86,6 +107,7 @@ def lista_apartamentos(request):
 
 
 # Criar apartamento
+@staff_required
 def novo_apartamento(request):
     if request.method == "POST":
         form = ApartamentoForm(request.POST)
@@ -101,6 +123,7 @@ def novo_apartamento(request):
 
 
 # Listar moradores
+@staff_required
 def lista_moradores(request):
     # --- PEGANDO E LIMANDO OS FILTROS ---
     nome = request.GET.get("nome", "").strip()
@@ -151,6 +174,7 @@ def ajax_apartamentos_por_bloco(request, bloco_id):
     data = [{"id": a.id, "numero": a.numero} for a in apartamentos]
     return JsonResponse(data, safe=False)
 # Criar morador
+@staff_required
 def novo_morador(request):
     if request.method == "POST":
         print("aq")
@@ -168,6 +192,7 @@ def novo_morador(request):
 
 
 # Editar morador
+@staff_required
 def editar_morador(request, pk):
     morador = get_object_or_404(Morador, pk=pk)
 

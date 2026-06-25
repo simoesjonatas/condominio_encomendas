@@ -1,29 +1,26 @@
-
 version: '3.9'
 
 services:
   encomenda:
     build: .
     container_name: encomenda_web
-    command: gunicorn condominio.wsgi:application --bind 0.0.0.0:8000
+    # O WhiteNoise serve os estáticos direto pelo Gunicorn, então não precisa
+    # mais do nginx. O collectstatic gera os arquivos com hash (cache-busting).
+    command: >
+      bash -lc "python manage.py migrate &&
+                python manage.py collectstatic --noinput &&
+                gunicorn condominio.wsgi:application --bind 0.0.0.0:8000"
+    environment:
+      # Liga o storage com hash (custom.<hash>.css) -> sem precisar limpar cache
+      WHITENOISE: "True"
+      # Mantenha "False" em produção. Se precisar depurar, troque para "True".
+      DEBUG: "False"
     restart: always
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
     ports:
       - "8086:8000"
-
-  nginx_encomenda:
-    image: nginx:alpine
-    restart: always
-    container_name: encomenda_nginx
-    ports:
-      - "8087:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - static_volume:/staticfiles
-    depends_on:
-      - encomenda
 
 volumes:
   static_volume:

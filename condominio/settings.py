@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from django.contrib.messages import constants as messages
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-d()w$ktj7hs914=qe0$_r-nc78&bd*h_rej2q_4e3$fqw1lj$)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = ['localhost','condominio.simoesti.com.br', '*']
 
@@ -49,6 +50,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Serve os arquivos estáticos direto pelo Django/Gunicorn (dispensa o nginx)
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -113,9 +116,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
@@ -135,6 +138,24 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+# Cache-busting dos estáticos.
+# Quando ligado (WHITENOISE=True, usado em produção), o collectstatic gera nomes
+# com hash do conteúdo (ex.: custom.a1b2c3.css). Assim, ao alterar o CSS/JS o
+# endereço muda automaticamente e o navegador baixa a versão nova SEM precisar
+# limpar o cache. Em desenvolvimento fica desligado para o runserver continuar
+# servindo os arquivos direto, refletindo as mudanças na hora.
+USE_WHITENOISE = os.environ.get("WHITENOISE", "False") == "True"
+
+if USE_WHITENOISE:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -144,7 +165,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Mapeia o nível de mensagem do Django para as classes de alerta do Bootstrap
+MESSAGE_TAGS = {
+    messages.ERROR: "danger",
+}
+
 LOGIN_URL = "/login/"
-LOGIN_REDIRECT_URL = "/encomendas/"
+LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login/"
 

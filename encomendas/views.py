@@ -140,32 +140,80 @@ def dashboard_view(request):
     # -------------------------
     # 3) BIG NUMBERS
     # -------------------------
-    pendentes_hoje = Encomenda.objects.filter(
-        data_recebimento=hoje,
-        retirado=False
+    pendentes_total = Encomenda.objects.filter(retirado=False).count()
+    entregues_hoje = Encomenda.objects.filter(data_retirada__date=hoje).count()
+    recebidas_hoje = Encomenda.objects.filter(data_recebimento=hoje).count()
+
+    # Recebidas no mês atual
+    recebidas_mes = Encomenda.objects.filter(
+        data_recebimento__year=hoje.year,
+        data_recebimento__month=hoje.month,
     ).count()
 
-    pendentes_total = Encomenda.objects.filter(
-        retirado=False
+    # Pendentes paradas há mais de 3 dias (alerta operacional)
+    limite_antigas = hoje - datetime.timedelta(days=3)
+    pendentes_antigas_count = Encomenda.objects.filter(
+        retirado=False,
+        data_recebimento__lte=limite_antigas,
     ).count()
 
-    entregues_hoje = Encomenda.objects.filter(
-        data_retirada__date=hoje
-    ).count()
+    # -------------------------
+    # 4) PENDENTES POR LOCAL DE ARMAZENAMENTO (rosca)
+    # -------------------------
+    locais_legenda = dict(Encomenda._meta.get_field("local_armazenado").choices)
+    por_local = (
+        Encomenda.objects.filter(retirado=False)
+        .values("local_armazenado")
+        .annotate(total=Count("id"))
+        .order_by("-total")
+    )
+    local_labels = [locais_legenda.get(x["local_armazenado"], x["local_armazenado"]) for x in por_local]
+    local_totais = [x["total"] for x in por_local]
 
-    recebidas_hoje = Encomenda.objects.filter(
-        data_recebimento=hoje
-    ).count()
+    # -------------------------
+    # 5) PENDENTES POR BLOCO (barras) — top 6
+    # -------------------------
+    por_bloco = (
+        Encomenda.objects.filter(retirado=False)
+        .values("apartamento__bloco__nome")
+        .annotate(total=Count("id"))
+        .order_by("-total")[:6]
+    )
+    bloco_labels = [x["apartamento__bloco__nome"] for x in por_bloco]
+    bloco_totais = [x["total"] for x in por_bloco]
+
+    # -------------------------
+    # 6) PENDENTES MAIS ANTIGAS (tabela acionável) — top 8
+    # -------------------------
+    antigas_qs = (
+        Encomenda.objects.filter(retirado=False)
+        .select_related("apartamento", "apartamento__bloco", "morador")
+        .order_by("data_recebimento")[:8]
+    )
+    pendentes_antigas = [{
+        "id": e.id,
+        "bloco": e.apartamento.bloco.nome,
+        "apto": e.apartamento.numero,
+        "morador": e.morador.nome if e.morador else "—",
+        "data": e.data_recebimento,
+        "dias": (hoje - e.data_recebimento).days,
+    } for e in antigas_qs]
 
     return render(request, "encomendas/dashboard.html", {
-        "pendentes_hoje": pendentes_hoje,
         "pendentes_total": pendentes_total,
         "entregues_hoje": entregues_hoje,
         "recebidas_hoje": recebidas_hoje,
+        "recebidas_mes": recebidas_mes,
+        "pendentes_antigas_count": pendentes_antigas_count,
         "recebidas_labels": recebidas_labels,
         "recebidas_totais": recebidas_totais,
         "entregues_labels": entregues_labels,
         "entregues_totais": entregues_totais,
+        "local_labels": local_labels,
+        "local_totais": local_totais,
+        "bloco_labels": bloco_labels,
+        "bloco_totais": bloco_totais,
+        "pendentes_antigas": pendentes_antigas,
     })
 
 
@@ -218,13 +266,24 @@ def etiqueta_encomenda(request, pk):
 
 def historico_entregas(request):
     termo = request.GET.get("q", "").strip()
+    data_inicio = request.GET.get("data_inicio", "").strip()
+    data_fim = request.GET.get("data_fim", "").strip()
     page_number = request.GET.get("page", 1)
 
-    entregues = Encomenda.objects.filter(retirado=True).select_related(
+    entregues_base = Encomenda.objects.filter(retirado=True).select_related(
         "apartamento",
-        "apartamento__bloco",
-        "morador"
+        "apartamento__bloco"
     )
+    entregues = entregues_base
+
+    data_inicio_obj = parse_date(data_inicio) if data_inicio else None
+    data_fim_obj = parse_date(data_fim) if data_fim else None
+
+    if data_inicio_obj:
+        entregues = entregues.filter(data_retirada__date__gte=data_inicio_obj)
+
+    if data_fim_obj:
+        entregues = entregues.filter(data_retirada__date__lte=data_fim_obj)
 
     if termo:
         match = re.match(r"^(\w+)[\s]*/[\s]*(\w+)$", termo)
@@ -238,7 +297,6 @@ def historico_entregas(request):
             )
         else:
             entregues = entregues.filter(
-                Q(morador__nome__icontains=termo) |
                 Q(apartamento__numero__icontains=termo) |
                 Q(apartamento__bloco__nome__icontains=termo) |
                 Q(descricao__icontains=termo) |
@@ -250,6 +308,7 @@ def historico_entregas(request):
 
     paginator = Paginator(entregues, 10)
     page_obj = paginator.get_page(page_number)
+    hoje = timezone.localdate()
 
     params = request.GET.copy()
     params.pop("page", None)
@@ -259,7 +318,12 @@ def historico_entregas(request):
         "page_obj": page_obj,
         "entregues": page_obj,
         "termo": termo,
+        "data_inicio": data_inicio,
+        "data_fim": data_fim,
         "querystring": querystring,
+        "total_resultados": paginator.count,
+        "total_entregues": entregues_base.count(),
+        "entregues_hoje": entregues_base.filter(data_retirada__date=hoje).count(),
     })
 
 

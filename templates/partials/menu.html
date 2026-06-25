@@ -1,89 +1,126 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+{% with url_name=request.resolver_match.url_name %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm sticky-top">
     <div class="container-fluid">
 
-        <a class="navbar-brand fw-bold" href="/">
-            <i class="bi bi-box-seam"></i> Encomendas
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+            <i class="bi bi-box-seam"></i>
+            <span>Encomendas</span>
         </a>
 
         <button class="navbar-toggler" type="button"
                 data-bs-toggle="collapse"
-                data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
+                data-bs-target="#navbarNav"
+                aria-controls="navbarNav"
+                aria-expanded="false"
+                aria-label="Abrir menu">
+            <span class="hamburger" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
 
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto align-items-lg-center">
+
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'dashboard' %}">
-                        <i class="bi bi-speedometer"></i> Dashboard
+                    <a class="nav-link {% if url_name == 'dashboard' %}active{% endif %}"
+                       href="{% url 'dashboard' %}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
                 </li>
 
-
                 <!-- Encomendas -->
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'lista_encomendas' %}">
+                    <a class="nav-link {% if url_name == 'lista_encomendas' %}active{% endif %}"
+                       href="{% url 'lista_encomendas' %}">
                         <i class="bi bi-list-task"></i> Encomendas
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'buscar_encomendas' %}">
+                    <a class="nav-link {% if url_name == 'buscar_encomendas' %}active{% endif %}"
+                       href="{% url 'buscar_encomendas' %}">
                         <i class="bi bi-search"></i> Buscar
                     </a>
                 </li>
 
-
                 <!-- Nova encomenda -->
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'nova_encomenda' %}">
+                    <a class="nav-link {% if url_name == 'nova_encomenda' %}active{% endif %}"
+                       href="{% url 'nova_encomenda' %}">
                         <i class="bi bi-plus-circle"></i> Nova Encomenda
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'historico_entregas' %}">
+                    <a class="nav-link {% if url_name == 'historico_entregas' %}active{% endif %}"
+                       href="{% url 'historico_entregas' %}">
                         <i class="bi bi-clock-history"></i> Histórico
                     </a>
                 </li>
 
-
-                <!-- Moradores -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'lista_moradores' %}">
-                        <i class="bi bi-people"></i> Moradores
+                <!-- Cadastros: apenas staff/admin -->
+                {% if user.is_staff or user.is_superuser %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {% if url_name == 'lista_moradores' or url_name == 'lista_apartamentos' or url_name == 'lista_blocos' %}active{% endif %}"
+                       href="#" id="menuCadastros" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-folder2-open"></i> Cadastros
                     </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="menuCadastros">
+                        <li>
+                            <a class="dropdown-item {% if url_name == 'lista_moradores' %}active{% endif %}"
+                               href="{% url 'lista_moradores' %}">
+                                <i class="bi bi-people me-2"></i> Moradores
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {% if url_name == 'lista_apartamentos' %}active{% endif %}"
+                               href="{% url 'lista_apartamentos' %}">
+                                <i class="bi bi-door-open me-2"></i> Apartamentos
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {% if url_name == 'lista_blocos' %}active{% endif %}"
+                               href="{% url 'lista_blocos' %}">
+                                <i class="bi bi-building me-2"></i> Blocos
+                            </a>
+                        </li>
+                    </ul>
                 </li>
-
-                <!-- Apartamentos -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'lista_apartamentos' %}">
-                        <i class="bi bi-door-open"></i> Apartamentos
-                    </a>
-                </li>
-
-                <!-- Blocos -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'lista_blocos' %}">
-                        <i class="bi bi-building"></i> Blocos
-                    </a>
-                </li>
+                {% endif %}
 
                 {% if user.is_authenticated %}
 
-                    <!-- Admin -->
+                    <li class="nav-item d-none d-lg-block">
+                        <span class="navbar-text mx-2 opacity-50">|</span>
+                    </li>
+
+                    <!-- Perfil (mostra o nome do usuário logado) -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if url_name == 'perfil' %}active{% endif %}"
+                           href="{% url 'perfil' %}" title="Meu perfil">
+                            <i class="bi bi-person-circle"></i>
+                            {{ user.get_full_name|default:user.get_username }}
+                        </a>
+                    </li>
+
+                    <!-- Admin: apenas staff/admin -->
+                    {% if user.is_staff or user.is_superuser %}
                     <li class="nav-item">
                         <a class="nav-link" href="/admin/">
                             <i class="bi bi-gear"></i> Admin
                         </a>
                     </li>
+                    {% endif %}
 
                     <!-- Logout -->
                     <li class="nav-item">
                         <form action="{% url 'logout' %}" method="post" class="d-inline">
                             {% csrf_token %}
-                            <button class="nav-link btn btn-link text-danger p-0" style="text-decoration:none;">
+                            <button type="submit" class="nav-link btn btn-link text-warning p-0 px-2" style="text-decoration:none;">
                                 <i class="bi bi-box-arrow-right"></i> Sair
                             </button>
                         </form>
@@ -93,7 +130,7 @@
 
                     <!-- Login -->
                     <li class="nav-item">
-                        <a class="nav-link text-success" href="/login/">
+                        <a class="nav-link text-white-50" href="/login/">
                             <i class="bi bi-box-arrow-in-right"></i> Entrar
                         </a>
                     </li>
@@ -104,3 +141,4 @@
         </div>
     </div>
 </nav>
+{% endwith %}

@@ -3,80 +3,269 @@
 
 {% block content %}
 
-<h3 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h3>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <h3 class="mb-0"><i class="bi bi-speedometer2 me-1"></i> Dashboard</h3>
+    <a href="{% url 'nova_encomenda' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Nova encomenda
+    </a>
+</div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- BIG NUMBERS -->
-<div class="row mb-4">
-    <div class="col-md-4 mb-3">
-        <div class="card text-center p-4 shadow-sm">
-            <h6 class="text-muted mb-1">Recebidas Hoje</h6>
-            <h2 class="display-5 fw-bold text-primary">{{ recebidas_hoje }}</h2>
+<!-- ===================== KPIs ===================== -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="card kpi-card h-100 border-start border-primary">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="kpi-icon bg-primary-subtle text-primary"><i class="bi bi-box-arrow-in-down"></i></span>
+                <div>
+                    <div class="kpi-value">{{ recebidas_hoje }}</div>
+                    <div class="kpi-label">Recebidas hoje</div>
+                    <div class="kpi-extra">{{ recebidas_mes }} no mês</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-4 mb-3">
-        <div class="card text-center p-4 shadow-sm">
-            <h6 class="text-muted mb-1">Pendentes no total</h6>
-            <h2 class="display-5 fw-bold text-warning">{{ pendentes_total }}</h2>
+    <div class="col-6 col-xl-3">
+        <div class="card kpi-card h-100 border-start border-success">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="kpi-icon bg-success-subtle text-success"><i class="bi bi-check2-circle"></i></span>
+                <div>
+                    <div class="kpi-value">{{ entregues_hoje }}</div>
+                    <div class="kpi-label">Entregues hoje</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-4 mb-3">
-        <div class="card text-center p-4 shadow-sm">
-            <h6 class="text-muted mb-1">Entregues Hoje</h6>
-            <h2 class="display-5 fw-bold text-success">{{ entregues_hoje }}</h2>
+    <div class="col-6 col-xl-3">
+        <div class="card kpi-card h-100 border-start border-warning">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="kpi-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></span>
+                <div>
+                    <div class="kpi-value">{{ pendentes_total }}</div>
+                    <div class="kpi-label">Pendentes no total</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+        <div class="card kpi-card h-100 border-start border-danger">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="kpi-icon bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle"></i></span>
+                <div>
+                    <div class="kpi-value">{{ pendentes_antigas_count }}</div>
+                    <div class="kpi-label">Paradas há +3 dias</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- ===================== GRÁFICOS ===================== -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-lg-8">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Recebidas x Entregues — últimos 7 dias</h5>
+                <div class="chart-box">
+                    <canvas id="graficoFluxo"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- GRÁFICO DE RECEBIDAS -->
-<div class="card p-3 shadow-sm mb-4">
-    <h5 class="text-center mb-3">Encomendas Recebidas – Últimos 7 dias</h5>
-    <canvas id="graficoRecebidas"></canvas>
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title mb-3">Pendentes por local</h5>
+                {% if local_totais %}
+                    <div class="chart-box flex-grow-1">
+                        <canvas id="graficoLocal"></canvas>
+                    </div>
+                {% else %}
+                    <p class="text-muted my-auto text-center">
+                        <i class="bi bi-emoji-smile d-block fs-3 mb-2"></i>
+                        Nenhuma encomenda pendente.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- GRÁFICO DE ENTREGUES -->
-<div class="card p-3 shadow-sm">
-    <h5 class="text-center mb-3">Encomendas Entregues – Últimos 7 dias</h5>
-    <canvas id="graficoEntregues"></canvas>
+<!-- ===================== PENDÊNCIAS ===================== -->
+<div class="row g-3">
+    <div class="col-12 col-lg-7">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-clock-history me-1"></i> Pendências mais antigas
+                </h5>
+
+                {% if pendentes_antigas %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Bloco / Apto</th>
+                                <th>Morador</th>
+                                <th class="text-nowrap">Recebida</th>
+                                <th class="text-center">Parada</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in pendentes_antigas %}
+                            <tr>
+                                <td class="fw-semibold text-nowrap">{{ item.bloco }} · {{ item.apto }}</td>
+                                <td>{{ item.morador }}</td>
+                                <td class="text-nowrap">{{ item.data|date:"d/m/Y" }}</td>
+                                <td class="text-center">
+                                    <span class="badge {% if item.dias >= 7 %}bg-danger{% elif item.dias >= 3 %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                        {{ item.dias }} dia{{ item.dias|pluralize }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'detalhes_encomenda' item.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <p class="text-muted text-center my-4">
+                        <i class="bi bi-check2-all d-block fs-3 mb-2 text-success"></i>
+                        Tudo em dia! Nenhuma encomenda pendente.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title mb-3">Pendentes por bloco</h5>
+                {% if bloco_totais %}
+                    <div class="chart-box flex-grow-1">
+                        <canvas id="graficoBloco"></canvas>
+                    </div>
+                {% else %}
+                    <p class="text-muted my-auto text-center">
+                        <i class="bi bi-emoji-smile d-block fs-3 mb-2"></i>
+                        Nenhuma encomenda pendente.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 
+<!-- Dados para os gráficos (embutidos com segurança) -->
+{{ recebidas_labels|json_script:"d-receb-labels" }}
+{{ recebidas_totais|json_script:"d-receb-totais" }}
+{{ entregues_totais|json_script:"d-entreg-totais" }}
+{{ local_labels|json_script:"d-local-labels" }}
+{{ local_totais|json_script:"d-local-totais" }}
+{{ bloco_labels|json_script:"d-bloco-labels" }}
+{{ bloco_totais|json_script:"d-bloco-totais" }}
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
-// --------------------- GRÁFICO RECEBIDAS ------------------------
-new Chart(document.getElementById('graficoRecebidas'), {
-    type: 'line',
-    data: {
-        labels: {{ recebidas_labels|safe }},
-        datasets: [{
-            label: 'Recebidas',
-            data: {{ recebidas_totais|safe }},
-            borderColor: '#0d6efd',
-            backgroundColor: 'rgba(13, 110, 253, 0.2)',
-            tension: 0.3,
-            fill: true
-        }]
-    },
-});
+(function () {
+    function read(id) {
+        var el = document.getElementById(id);
+        return el ? JSON.parse(el.textContent) : [];
+    }
 
-// --------------------- GRÁFICO ENTREGUES ------------------------
-new Chart(document.getElementById('graficoEntregues'), {
-    type: 'line',
-    data: {
-        labels: {{ entregues_labels|safe }},
-        datasets: [{
-            label: 'Entregues',
-            data: {{ entregues_totais|safe }},
-            borderColor: '#198754',
-            backgroundColor: 'rgba(25, 135, 84, 0.2)',
-            tension: 0.3,
-            fill: true
-        }]
-    },
-});
+    Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+    Chart.defaults.color = "#6c757d";
+
+    // -------- Fluxo: Recebidas x Entregues --------
+    var fluxo = document.getElementById("graficoFluxo");
+    if (fluxo) {
+        new Chart(fluxo, {
+            type: "line",
+            data: {
+                labels: read("d-receb-labels"),
+                datasets: [
+                    {
+                        label: "Recebidas",
+                        data: read("d-receb-totais"),
+                        borderColor: "#0d6efd",
+                        backgroundColor: "rgba(13,110,253,.12)",
+                        tension: .35, fill: true, pointRadius: 3, borderWidth: 2
+                    },
+                    {
+                        label: "Entregues",
+                        data: read("d-entreg-totais"),
+                        borderColor: "#198754",
+                        backgroundColor: "rgba(25,135,84,.12)",
+                        tension: .35, fill: true, pointRadius: 3, borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: "bottom" } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    }
+
+    // -------- Rosca: pendentes por local --------
+    var local = document.getElementById("graficoLocal");
+    if (local) {
+        new Chart(local, {
+            type: "doughnut",
+            data: {
+                labels: read("d-local-labels"),
+                datasets: [{
+                    data: read("d-local-totais"),
+                    backgroundColor: ["#0d6efd", "#fd7e14", "#6f42c1", "#20c997", "#adb5bd"],
+                    borderWidth: 2,
+                    borderColor: "#fff"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "62%",
+                plugins: { legend: { position: "bottom" } }
+            }
+        });
+    }
+
+    // -------- Barras horizontais: pendentes por bloco --------
+    var bloco = document.getElementById("graficoBloco");
+    if (bloco) {
+        new Chart(bloco, {
+            type: "bar",
+            data: {
+                labels: read("d-bloco-labels"),
+                datasets: [{
+                    label: "Pendentes",
+                    data: read("d-bloco-totais"),
+                    backgroundColor: "#ffc107",
+                    borderRadius: 6,
+                    maxBarThickness: 28
+                }]
+            },
+            options: {
+                indexAxis: "y",
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    }
+})();
 </script>
 
 {% endblock %}
